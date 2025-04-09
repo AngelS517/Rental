@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'encuesta.dart';
 
+//Holis . M
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
 
