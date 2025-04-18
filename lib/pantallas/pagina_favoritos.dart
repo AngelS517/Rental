@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class PaginaCuatro extends StatelessWidget {
-  const PaginaCuatro({super.key});
+class PaginaFavoritos extends StatelessWidget {
+  const PaginaFavoritos({super.key});
 
   @override
   Widget build(BuildContext context) {

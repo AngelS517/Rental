@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
-import 'login.dart';
+import 'pantallas/login.dart';
+import 'pantallas/pagina_principal.dart';
+import 'pantallas/pagina_mapa.dart';
+import 'pantallas/pagina_perfil.dart';
+import 'pantallas/pagina_favoritos.dart';
+import 'pantallas/pagina_vehiculos.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,7 +19,15 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Rental App',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: const LoginPage(),
+      initialRoute: '/login',
+      routes: {
+        '/login': (context) => const LoginPage(),
+        '/inicio': (context) => const PaginaPrincipal(),
+        '/mapa': (context) => const PaginaMapa(),
+        '/perfil': (context) => const PaginaPerfil(),
+        '/favoritos': (context) => const PaginaFavoritos(),
+        '/vehiculos': (context) => const PaginaVehiculos(),
+      },
     );
   }
 }
