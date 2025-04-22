@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'encuesta.dart';
+import 'pagina_registro.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -86,19 +87,39 @@ class LoginPage extends StatelessWidget {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => const EncuestaPage()),
+                                builder: (context) => const EncuestaPage(),
+                              ),
                             );
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                  content: Text(
-                                      'Por favor, ingresa tu correo y contraseña')),
+                                content: Text(
+                                  'Por favor, ingresa tu correo y contraseña',
+                                ),
+                              ),
                             );
                           }
                         },
                         child: const Text(
                           'Iniciar Sesión',
                           style: TextStyle(fontSize: 18, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Center(
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const RegistroPage(),
+                            ),
+                          );
+                        },
+                        child: const Text(
+                          '¿No tienes cuenta? Regístrate',
+                          style: TextStyle(color: Colors.blue),
                         ),
                       ),
                     ),
