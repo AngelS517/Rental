@@ -1,21 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class RegistroPage extends StatelessWidget {
   const RegistroPage({super.key});
+
+  bool validarPassword(String password) {
+    final RegExp regex = RegExp(
+      r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#\$&*~]).{8,}$',
+    );
+    return regex.hasMatch(password);
+  }
 
   @override
   Widget build(BuildContext context) {
     final TextEditingController nombreController = TextEditingController();
     final TextEditingController emailController = TextEditingController();
     final TextEditingController passwordController = TextEditingController();
-    final TextEditingController confirmPasswordController =
-        TextEditingController();
+    final TextEditingController confirmPasswordController = TextEditingController();
     final TextEditingController telefonoController = TextEditingController();
-    final TextEditingController fechaNacimientoController =
-        TextEditingController();
+    final TextEditingController fechaNacimientoController = TextEditingController();
     final TextEditingController direccionController = TextEditingController();
 
-    // Función para seleccionar la fecha
     Future<void> _selectDate(BuildContext context) async {
       DateTime? pickedDate = await showDatePicker(
         context: context,
@@ -25,7 +30,6 @@ class RegistroPage extends StatelessWidget {
       );
 
       if (pickedDate != null) {
-        // Formatear la fecha como dd/mm/yyyy
         fechaNacimientoController.text = '${pickedDate.day}/${pickedDate.month}/${pickedDate.year}';
       }
     }
@@ -55,12 +59,12 @@ class RegistroPage extends StatelessWidget {
             TextField(
               controller: telefonoController,
               keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(hintText: 'numero telefonico'),
+              decoration: const InputDecoration(hintText: 'Número telefónico'),
             ),
             const SizedBox(height: 10),
             const Text('Fecha de nacimiento'),
             GestureDetector(
-              onTap: () => _selectDate(context), // Abre el DatePicker
+              onTap: () => _selectDate(context),
               child: AbsorbPointer(
                 child: TextField(
                   controller: fechaNacimientoController,
@@ -117,14 +121,34 @@ class RegistroPage extends StatelessWidget {
                       content: Text('Las contraseñas no coinciden'),
                     ),
                   );
-                } else {
+                } else if (!validarPassword(pass)) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Registro exitoso')),
+                    const SnackBar(
+                      content: Text(
+                          'La contraseña debe tener al menos 8 caracteres, incluir mayúsculas, minúsculas, números y un símbolo especial.'),
+                    ),
                   );
+                } else {
+                  FirebaseFirestore.instance.collection('Usuarios').add({
+                    'nombre': nombre,
+                    'correo': correo,
+                    'telefono': telefono,
+                    'fechaNacimiento': fechaNacimiento,
+                    'direccion': direccion,
+                    'password': pass, // ⚠️ En apps reales, ¡usa hashing!
+                    'fechaRegistro': Timestamp.now(),
+                  }).then((_) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Registro exitoso')),
+                    );
 
-                  // Esperar un momento para mostrar el mensaje, luego regresar
-                  Future.delayed(const Duration(seconds: 2), () {
-                    Navigator.pop(context); // volver al login
+                    Future.delayed(const Duration(seconds: 2), () {
+                      Navigator.pop(context);
+                    });
+                  }).catchError((error) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error al registrar: $error')),
+                    );
                   });
                 }
               },

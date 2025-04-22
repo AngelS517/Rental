@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'encuesta.dart';
 import 'pagina_registro.dart';
 
@@ -79,23 +80,44 @@ class LoginPage extends StatelessWidget {
                           backgroundColor: Colors.blue.shade900,
                           padding: const EdgeInsets.symmetric(vertical: 15),
                         ),
-                        onPressed: () {
+                        onPressed: () async {
                           String email = emailController.text.trim();
                           String password = passwordController.text.trim();
 
                           if (email.isNotEmpty && password.isNotEmpty) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const EncuestaPage(),
-                              ),
-                            );
+                            try {
+                              final query = await FirebaseFirestore.instance
+                                  .collection('usuarios')
+                                  .where('correo', isEqualTo: email)
+                                  .where('password', isEqualTo: password)
+                                  .get();
+
+                              if (query.docs.isNotEmpty) {
+                                // Usuario encontrado
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const EncuestaPage(),
+                                  ),
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Correo o contraseña incorrectos'),
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error al iniciar sesión: $e'),
+                                ),
+                              );
+                            }
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text(
-                                  'Por favor, ingresa tu correo y contraseña',
-                                ),
+                                content: Text('Por favor, ingresa tu correo y contraseña'),
                               ),
                             );
                           }
