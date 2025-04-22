@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'pagina_vehiculos.dart'; // Asegúrate de tener esta pantalla creada
+import 'pagina_automoviles.dart'; // Asegúrate de tener esta pantalla creada
 
 class PaginaPrincipal extends StatelessWidget {
   const PaginaPrincipal({super.key});

@@ -27,7 +27,7 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Lista de Vehículos'),
+        title: const Text('Lista de Automoviles'),
         backgroundColor: Colors.blue.shade900,
       ),
       body: ListView(

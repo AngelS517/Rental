@@ -4,7 +4,7 @@ import 'pantallas/pagina_principal.dart';
 import 'pantallas/pagina_mapa.dart';
 import 'pantallas/pagina_perfil.dart';
 import 'pantallas/pagina_favoritos.dart';
-import 'pantallas/pagina_vehiculos.dart';
+import 'pantallas/pagina_automoviles.dart';
 
 void main() {
   runApp(const MyApp());
