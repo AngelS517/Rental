@@ -5,8 +5,12 @@ import 'pantallas/pagina_mapa.dart';
 import 'pantallas/pagina_perfil.dart';
 import 'pantallas/pagina_favoritos.dart';
 import 'pantallas/pagina_automoviles.dart';
+import 'package:firebase_core/firebase_core.dart';
 
-void main() {
+
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 

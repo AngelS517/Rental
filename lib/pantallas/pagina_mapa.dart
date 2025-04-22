@@ -53,7 +53,7 @@ class _PaginaMapaState extends State<PaginaMapa> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Mapa de Vehículo Alquilado")),
+      appBar: AppBar(title: const Text("Mapa de ubicación usuario")),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : FlutterMap(

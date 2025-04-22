@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:rental/widgets/custom_widgets.dart';
 
 class PaginaVehiculos extends StatefulWidget {
@@ -27,33 +28,38 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Lista de Automoviles'),
+        title: const Text('Lista de Automóviles'),
         backgroundColor: Colors.blue.shade900,
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          vehiculoItem(
-            'Chevrolet Spark',
-            'Dueño: Juan Sebastián',
-            'assets/carro1.png',
-          ),
-          vehiculoItem(
-            'Mazda 3 Touring',
-            'Dueño: Laura Gómez',
-            'assets/carro2.png',
-          ),
-          vehiculoItem(
-            'Toyota Corolla',
-            'Dueño: Andrés Pérez',
-            'assets/carro3.png',
-          ),
-          vehiculoItem(
-            'Renault Logan',
-            'Dueño: María Torres',
-            'assets/carro4.png',
-          ),
-        ],
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('Vehiculos')
+            .where('Categoria', isEqualTo: 'Automovil')
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return const Center(child: Text('No hay automóviles disponibles.'));
+          }
+
+          final vehiculos = snapshot.data!.docs;
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: vehiculos.length,
+            itemBuilder: (context, index) {
+              final data = vehiculos[index].data() as Map<String, dynamic>;
+              return vehiculoItem(
+                data['Marca'] ?? 'Sin marca',
+                'Dueño: ${data['Dueño'] ?? 'Desconocido'}',
+                data['Imagen'] ?? '',
+              );
+            },
+          );
+        },
       ),
       bottomNavigationBar: CustomNavBar(
         selectedIndex: _selectedIndex,
@@ -62,22 +68,25 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
     );
   }
 
-  Widget vehiculoItem(String titulo, String propietario, String imagen) {
+  Widget vehiculoItem(String titulo, String propietario, String imagenUrl) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
-        leading: Image.asset(
-          imagen,
-          width: 50,
-          height: 50,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return const Icon(
-              Icons.image_not_supported,
-              size: 50,
-              color: Colors.grey,
-            );
-          },
+        leading: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.network(
+            imagenUrl,
+            width: 60,
+            height: 60,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return const Icon(
+                Icons.image_not_supported,
+                size: 50,
+                color: Colors.grey,
+              );
+            },
+          ),
         ),
         title: Text(
           titulo,
@@ -86,7 +95,7 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
         subtitle: Text(propietario),
         trailing: const Icon(Icons.local_offer, color: Colors.orange),
         onTap: () {
-          // Aquí podrías navegar a detalles del vehículo si quieres
+          // Aquí podrías navegar a los detalles del vehículo
         },
       ),
     );
