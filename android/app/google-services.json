@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "423326870590",
+    "firebase_url": "https://rental-721a8-default-rtdb.firebaseio.com",
+    "project_id": "rental-721a8",
+    "storage_bucket": "rental-721a8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:423326870590:android:3f249bf2ec15d05238356f",
+        "android_client_info": {
+          "package_name": "com.example.rental"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCvmukzt4Pa3tVD479vUWNfS9TAtw7GChI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

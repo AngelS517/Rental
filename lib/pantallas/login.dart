@@ -47,7 +47,7 @@ class LoginPage extends StatelessWidget {
                     TextField(
                       controller: emailController,
                       decoration: InputDecoration(
-                        hintText: 'example@gmail.com',
+                        hintText: 'ejemplo@gmail.com',
                         filled: true,
                         fillColor: Colors.grey[300],
                         border: OutlineInputBorder(

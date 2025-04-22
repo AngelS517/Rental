@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class PaginaTres extends StatelessWidget {
-  const PaginaTres({super.key});
+class PaginaPerfil extends StatelessWidget {
+  const PaginaPerfil({super.key});
 
   @override
   Widget build(BuildContext context) {
