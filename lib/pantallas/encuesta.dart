@@ -1,7 +1,6 @@
-// Porque tan guapo, lindo?
-
 import 'package:flutter/material.dart';
 import 'pagina_inicio.dart';
+import 'pagina_agregar.dart'; // Importa la nueva página
 
 class EncuestaPage extends StatelessWidget {
   const EncuestaPage({super.key});
@@ -24,21 +23,23 @@ class EncuestaPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 40),
-            opcionEncuesta(context, Icons.vpn_key, 'Necesito un Vehículo'),
+            opcionEncuesta(context, Icons.vpn_key, 'Necesito un Vehículo', true),
             const SizedBox(height: 20),
-            opcionEncuesta(context, Icons.add_circle, 'Quiero ofrecer mi Vehículo'),
+            opcionEncuesta(context, Icons.add_circle, 'Quiero ofrecer mi Vehículo', false),
           ],
         ),
       ),
     );
   }
 
-  Widget opcionEncuesta(BuildContext context, IconData icon, String texto) {
+  Widget opcionEncuesta(BuildContext context, IconData icon, String texto, bool esPrimeraOpcion) {
     return GestureDetector(
       onTap: () {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const PaginaInicio()),
+          MaterialPageRoute(
+            builder: (context) => esPrimeraOpcion ? const PaginaInicio() : const PaginaAgregar(),
+          ),
         );
       },
       child: Container(
@@ -62,3 +63,4 @@ class EncuestaPage extends StatelessWidget {
     );
   }
 }
+
