@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'pagina_inicio.dart';
+import 'package:rental/widgets/custom_widgets.dart';
+import 'pagina_principal.dart'; // Cambiado de pagina_inicio.dart
 
 class PaginaAgregar extends StatefulWidget {
   const PaginaAgregar({super.key});
@@ -28,28 +29,28 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
   Future<void> _guardarEnFirebase() async {
     try {
       await FirebaseFirestore.instance.collection('Vehiculos').add({
-        'calificacion': int.tryParse(_formData['calificacion']),
-        'categoria': _formData['categoria'],
-        'ciudad': _formData['ciudad'],
-        'descripcion': _formData['descripcion'],
-        'direccion': _formData['direccion'],
-        'dueno': _formData['dueno'],
-        'imagen': _formData['imagen'],
-        'marca': _formData['marca'],
-        'modelo': int.tryParse(_formData['modelo']),
-        'placa': _formData['placa'],
-        'precio': double.tryParse(_formData['precio']),
+        'Calificacion': int.tryParse(_formData['calificacion']),
+        'Categoria': _formData['categoria'],
+        'Ciudad': _formData['ciudad'],
+        'Descripcion': _formData['descripcion'],
+        'Direccion': _formData['direccion'],
+        'Dueño': _formData['dueno'],
+        'Imagen': _formData['imagen'],
+        'Marca': _formData['marca'],
+        'Modelo': int.tryParse(_formData['modelo']),
+        'Placa': _formData['placa'],
+        'Precio': double.tryParse(_formData['precio']),
         'fechaCreacion': FieldValue.serverTimestamp(),
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vehículo agregado exiitosamente')),
+        const SnackBar(content: Text('Vehículo agregado exitosamente')),
       );
 
-      // ✅ Redirección después de guardar exitosamente
+      // Redirección a PaginaPrincipal
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const PaginaInicio()),
+        MaterialPageRoute(builder: (context) => const PaginaPrincipal()),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -67,12 +68,32 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
     );
   }
 
+  void _onItemTapped(int index) {
+    Navigator.pushReplacementNamed(context, _getRouteForIndex(index));
+  }
+
+  String _getRouteForIndex(int index) {
+    switch (index) {
+      case 0:
+        return '/inicio';
+      case 1:
+        return '/mapa';
+      case 2:
+        return '/perfil';
+      case 3:
+        return '/favoritos';
+      default:
+        return '/inicio';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Agregar Vehículo'),
         backgroundColor: Colors.blue.shade900,
+        automaticallyImplyLeading: false,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -96,7 +117,7 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
                 onPressed: () {
                   if (_formKey.currentState!.validate()) {
                     _formKey.currentState!.save();
-                    _guardarEnFirebase(); // Guarda primero, y luego redirige
+                    _guardarEnFirebase();
                   }
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.blue.shade900),
@@ -105,6 +126,10 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
             ],
           ),
         ),
+      ),
+      bottomNavigationBar: CustomNavBar(
+        selectedIndex: -1,
+        onTap: _onItemTapped,
       ),
     );
   }

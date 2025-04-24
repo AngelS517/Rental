@@ -1,8 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:rental/pantallas/pagina_principal.dart';
-import 'package:rental/pantallas/pagina_mapa.dart';
-import 'package:rental/pantallas/pagina_perfil.dart';
-import 'package:rental/pantallas/pagina_favoritos.dart';
 
 class CustomNavBar extends StatelessWidget {
   final int selectedIndex;
@@ -22,6 +18,10 @@ class CustomNavBar extends StatelessWidget {
       type: BottomNavigationBarType.fixed,
       selectedFontSize: 14,
       unselectedFontSize: 12,
+      selectedItemColor: Colors.blue.shade900, // Color para ítem seleccionado
+      unselectedItemColor: Colors.grey, // Color para ítems no seleccionados
+      backgroundColor: Colors.white, // Fondo de la barra
+      elevation: 8, // Sombra para mayor profundidad
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
         BottomNavigationBarItem(icon: Icon(Icons.location_on), label: 'Mapa'),
@@ -31,4 +31,3 @@ class CustomNavBar extends StatelessWidget {
     );
   }
 }
-

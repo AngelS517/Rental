@@ -81,29 +81,39 @@ class LoginPage extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(vertical: 15),
                         ),
                         onPressed: () async {
-                          String email = emailController.text.trim();
+                          String email = emailController.text.trim().toLowerCase();
                           String password = passwordController.text.trim();
 
                           if (email.isNotEmpty && password.isNotEmpty) {
                             try {
                               final query = await FirebaseFirestore.instance
-                                  .collection('usuarios')
+                                  .collection('Usuarios')
                                   .where('correo', isEqualTo: email)
-                                  .where('password', isEqualTo: password)
                                   .get();
 
                               if (query.docs.isNotEmpty) {
-                                // Usuario encontrado
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const EncuestaPage(),
-                                  ),
-                                );
+                                final userData = query.docs.first.data();
+                                final storedPassword = userData['password'];
+
+                                if (storedPassword == password) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const EncuestaPage(),
+                                    ),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Contraseña incorrecta'),
+                                    ),
+                                  );
+                                }
                               } else {
+                                print("DEBUG: Correo no encontrado -> '$email'");
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text('Correo o contraseña incorrectos'),
+                                    content: Text('Correo no registrado'),
                                   ),
                                 );
                               }

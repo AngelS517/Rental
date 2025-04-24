@@ -1,14 +1,35 @@
 import 'package:flutter/material.dart';
-import 'pagina_automoviles.dart'; // Asegúrate de tener esta pantalla creada
+import 'package:rental/widgets/custom_widgets.dart';
+import 'pagina_automoviles.dart'; // Corregido
 
-class PaginaPrincipal extends StatelessWidget {
+class PaginaPrincipal extends StatefulWidget {
   const PaginaPrincipal({super.key});
+
+  @override
+  _PaginaPrincipalState createState() => _PaginaPrincipalState();
+}
+
+class _PaginaPrincipalState extends State<PaginaPrincipal> {
+  int _selectedIndex = 0; // Índice para "Inicio"
+
+  void _onItemTapped(int index) {
+    if (index == 0) {
+      // Ya estamos en Inicio, no hacemos nada
+    } else if (index == 1) {
+      Navigator.pushNamed(context, '/mapa');
+    } else if (index == 2) {
+      Navigator.pushNamed(context, '/perfil');
+    } else if (index == 3) {
+      Navigator.pushNamed(context, '/favoritos');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue.shade900,
+        automaticallyImplyLeading: false, // Quita la flecha de retroceso
         title: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -65,6 +86,10 @@ class PaginaPrincipal extends StatelessWidget {
             ],
           ),
         ),
+      ),
+      bottomNavigationBar: CustomNavBar(
+        selectedIndex: _selectedIndex,
+        onTap: _onItemTapped,
       ),
     );
   }

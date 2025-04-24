@@ -6,9 +6,9 @@ import 'pantallas/pagina_perfil.dart';
 import 'pantallas/pagina_favoritos.dart';
 import 'pantallas/pagina_automoviles.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'pantallas/mapa_automovil.dart';
 
-
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   runApp(const MyApp());
@@ -31,6 +31,7 @@ class MyApp extends StatelessWidget {
         '/perfil': (context) => const PaginaPerfil(),
         '/favoritos': (context) => const PaginaFavoritos(),
         '/vehiculos': (context) => const PaginaVehiculos(),
+        '/mapa_automovil': (context) => const MapaAutomovil(),
       },
     );
   }

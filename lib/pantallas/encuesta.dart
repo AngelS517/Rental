@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'pagina_inicio.dart';
+import 'pagina_principal.dart';
 import 'pagina_agregar.dart'; // Importa la nueva página
 
 class EncuestaPage extends StatelessWidget {
@@ -38,7 +38,7 @@ class EncuestaPage extends StatelessWidget {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => esPrimeraOpcion ? const PaginaInicio() : const PaginaAgregar(),
+            builder: (context) => esPrimeraOpcion ? const PaginaPrincipal() : const PaginaAgregar(),
           ),
         );
       },
