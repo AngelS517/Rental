@@ -72,7 +72,7 @@ class _MapaAutomovilState extends State<MapaAutomovil> {
                     Marker(
                       width: 80.0,
                       height: 80.0,
-                      point: _location!,
+                      point: _location!, //variable que guarda la ubicación 
                       child: const Icon(
                         Icons.directions_car,
                         color: Colors.blue,

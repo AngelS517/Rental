@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:rental/widgets/custom_widgets.dart';
-import 'pagina_automoviles.dart'; // Corregido
+import 'pagina_automoviles.dart'; 
 
 class PaginaPrincipal extends StatefulWidget {
   const PaginaPrincipal({super.key});
@@ -14,7 +14,7 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
 
   void _onItemTapped(int index) {
     if (index == 0) {
-      // Ya estamos en Inicio, no hacemos nada
+      
     } else if (index == 1) {
       Navigator.pushNamed(context, '/mapa');
     } else if (index == 2) {

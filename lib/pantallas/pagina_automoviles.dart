@@ -1,11 +1,11 @@
 // Importación de paquetes necesarios para Flutter, Firestore y componentes personalizados
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:rental/widgets/custom_widgets.dart'; // Archivo donde está la barra de navegación personalizada
+import 'package:rental/widgets/custom_widgets.dart'; 
 
 // Componente principal que muestra la lista de vehículos
 class PaginaVehiculos extends StatefulWidget {
-  const PaginaVehiculos({super.key}); // Constructor constante
+  const PaginaVehiculos({super.key}); //constructor
 
   @override
   State<PaginaVehiculos> createState() => _PaginaVehiculosState(); // Crea el estado para el widget

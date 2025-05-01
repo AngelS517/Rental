@@ -84,6 +84,7 @@ class LoginPage extends StatelessWidget {
                           String email = emailController.text.trim().toLowerCase();
                           String password = passwordController.text.trim();
 
+                          //aqui se hace la consulta del usuario, si esta registrado y lo deja ingresar
                           if (email.isNotEmpty && password.isNotEmpty) {
                             try {
                               final query = await FirebaseFirestore.instance
@@ -141,6 +142,7 @@ class LoginPage extends StatelessWidget {
                     const SizedBox(height: 10),
                     Center(
                       child: TextButton(
+                        //Envia a la pagina de registro
                         onPressed: () {
                           Navigator.push(
                             context,

@@ -79,9 +79,9 @@ class _PaginaMapaState extends State<PaginaMapa> {
               children: [
                 // Capa que carga los tiles (imágenes) de OpenStreetMap
                 TileLayer(
-                  urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", // URL base de los tiles
-                  subdomains: const ['a', 'b', 'c'], // Subdominios usados por OpenStreetMap
-                  userAgentPackageName: 'com.example.rental', // Nombre del paquete (importante para Android)
+                  urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", // URL base 
+                  subdomains: const ['a', 'b', 'c'], // Subdominios 
+                  userAgentPackageName: 'com.example.rental', 
                 ),
                 // Capa de marcadoresx
                 MarkerLayer(

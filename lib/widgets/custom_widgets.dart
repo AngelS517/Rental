@@ -9,7 +9,7 @@ class CustomNavBar extends StatelessWidget {
     required this.selectedIndex,
     required this.onTap,
   });
-
+//NavBar
   @override
   Widget build(BuildContext context) {
     return BottomNavigationBar(

@@ -4,6 +4,7 @@
   class RegistroPage extends StatelessWidget {
     const RegistroPage({super.key});
 
+    //Este codigo le da los requriminetos minimos de la contraseña
     bool validarPassword(String password) {
       final RegExp regex = RegExp(
         r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#\$&*~]).{8,}$',
@@ -129,13 +130,13 @@
                       ),
                     );
                   } else {
-                    FirebaseFirestore.instance.collection('Usuarios').add({
+                    FirebaseFirestore.instance.collection('Usuarios').add({ //funcion guardar o registrar en la base de datos
                       'nombre': nombre,
                       'correo': correo,
                       'telefono': telefono,
                       'fechaNacimiento': fechaNacimiento,
                       'direccion': direccion,
-                      'password': pass, // ⚠️ En apps reales, ¡usa hashing!
+                      'password': pass, 
                       'fechaRegistro': Timestamp.now(),
                     }).then((_) {
                       ScaffoldMessenger.of(context).showSnackBar(

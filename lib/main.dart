@@ -8,6 +8,7 @@ import 'pantallas/pagina_automoviles.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'pantallas/mapa_automovil.dart';
 
+//inicializa la base de datos
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
