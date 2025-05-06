@@ -12,79 +12,111 @@ class LoginPage extends StatelessWidget {
     final TextEditingController passwordController = TextEditingController();
 
     return Scaffold(
-      backgroundColor: Colors.blue.shade900,
-      body: Center(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              const Icon(Icons.directions_car, size: 100, color: Colors.white),
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(50),
-                    bottomLeft: Radius.circular(20),
-                    bottomRight: Radius.circular(50),
-                  ),
+      backgroundColor: Colors.white,
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            const SizedBox(height: 60),
+            Center(
+              child: Image.asset('imagenes/logorental.png', height: 120),
+            ),
+            const SizedBox(height: 20),
+            Container(
+              decoration: const BoxDecoration(
+                color: Color(0xFF0A0C58), // Azul oscuro
+                borderRadius: BorderRadius.only(
+                  topRight: Radius.circular(80),   // curva grande arriba a la derecha
+                  bottomLeft: Radius.circular(80), // curva grande abajo a la izquierda
                 ),
-                width: double.infinity,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Center(
-                      child: Text(
-                        'Rental',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
+              ),
+              padding: const EdgeInsets.only(
+                left: 30,
+                right: 30,
+                top: 40,
+                bottom: 80, // Aumentado para hacer el cuadro más largo en la parte inferior
+              ),
+              child: Column(
+                children: [
+                  const Text(
+                    'Rental',
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  const Text(
+                    'Bienvenido',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white70,
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+                  TextField(
+                    controller: emailController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      labelText: 'Correo:',
+                      labelStyle: const TextStyle(color: Colors.white),
+                      hintText: 'Juanchito@gmail.com',
+                      hintStyle: const TextStyle(color: Colors.white70),
+                      filled: true,
+                      fillColor: const Color(0xFF4B4EAB),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide.none,
                       ),
                     ),
-                    const Center(child: Text('Bienvenido')),
-                    const SizedBox(height: 20),
-                    const Text('Correo:'),
-                    TextField(
-                      controller: emailController,
-                      decoration: InputDecoration(
-                        hintText: 'example@gmail.com',
-                        filled: true,
-                        fillColor: Colors.grey[300],
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide.none,
-                        ),
+                  ),
+                  const SizedBox(height: 15),
+                  TextField(
+                    controller: passwordController,
+                    obscureText: true,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      labelText: 'Contraseña:',
+                      labelStyle: const TextStyle(color: Colors.white),
+                      hintText: '******',
+                      hintStyle: const TextStyle(color: Colors.white70),
+                      filled: true,
+                      fillColor: const Color(0xFF4B4EAB),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide.none,
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    const Text('Contraseña:'),
-                    TextField(
-                      controller: passwordController,
-                      obscureText: true,
-                      decoration: InputDecoration(
-                        hintText: '******',
-                        filled: true,
-                        fillColor: Colors.grey[300],
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide.none,
+                  ),
+                  const SizedBox(height: 30),
+                  // Botón con degradado personalizado
+                  SizedBox(
+                    width: double.infinity,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Color(0xFF071082), // Azul profundo
+                            Color(0xFF7B43CD), // Morado
+                          ],
                         ),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    SizedBox(
-                      width: double.infinity,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue.shade900,
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
                           padding: const EdgeInsets.symmetric(vertical: 15),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                         onPressed: () async {
                           String email = emailController.text.trim().toLowerCase();
                           String password = passwordController.text.trim();
 
-                          //aqui se hace la consulta del usuario, si esta registrado y lo deja ingresar
                           if (email.isNotEmpty && password.isNotEmpty) {
                             try {
                               final query = await FirebaseFirestore.instance
@@ -111,7 +143,6 @@ class LoginPage extends StatelessWidget {
                                   );
                                 }
                               } else {
-                                print("DEBUG: Correo no encontrado -> '$email'");
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                     content: Text('Correo no registrado'),
@@ -139,29 +170,41 @@ class LoginPage extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    Center(
-                      child: TextButton(
-                        //Envia a la pagina de registro
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const RegistroPage(),
-                            ),
-                          );
-                        },
-                        child: const Text(
-                          '¿No tienes cuenta? Regístrate',
-                          style: TextStyle(color: Colors.blue),
+                  ),
+                  const SizedBox(height: 20),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const RegistroPage(),
                         ),
+                      );
+                    },
+                    child: RichText(
+                      textAlign: TextAlign.center,
+                      text: const TextSpan(
+                        children: [
+                          TextSpan(
+                            text: '¿Olvidaste tu contraseña?\n',
+                            style: TextStyle(color: Colors.white70),
+                          ),
+                          TextSpan(
+                            text: 'Regístrate',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

@@ -14,7 +14,7 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
 
   void _onItemTapped(int index) {
     if (index == 0) {
-      
+      // No hace nada, ya estamos en Inicio
     } else if (index == 1) {
       Navigator.pushNamed(context, '/mapa');
     } else if (index == 2) {
@@ -27,38 +27,14 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.blue.shade900,
-        automaticallyImplyLeading: false, // Quita la flecha de retroceso
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset(
-              'assets/logo.png',
-              height: 40,
-              errorBuilder: (context, error, stackTrace) {
-                return const Text(
-                  'Rental',
-                  style: TextStyle(fontSize: 22, color: Colors.white),
-                );
-              },
-            ),
-            const SizedBox(width: 10),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.menu, color: Colors.white),
-            onPressed: () {},
-          ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
+      backgroundColor: Colors.white,
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const SizedBox(height: 80), // Espacio para el AppBar
               const Text(
                 'Categorías',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
@@ -68,11 +44,14 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
                 crossAxisCount: 2,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                childAspectRatio: 1.2,
                 children: [
-                  categoriaItem(context, Icons.directions_car, 'Automóvil'),
-                  categoriaItem(context, Icons.eco, 'Ecológico'),
-                  categoriaItem(context, Icons.motorcycle, 'Moto'),
-                  categoriaItem(context, Icons.pedal_bike, 'Bicicleta'),
+                  categoriaItem(context, 'imagenes/auto.png', 'Automóvil', true),
+                  categoriaItem(context, 'imagenes/minivan.png', 'Minivan', false),
+                  categoriaItem(context, 'imagenes/moto.png', 'Moto', false),
+                  categoriaItem(context, 'imagenes/electricos.png', 'Electricos', false),
                 ],
               ),
               const SizedBox(height: 20),
@@ -87,6 +66,29 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
           ),
         ),
       ),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        title: Center(
+          child: Image.asset(
+            'imagenes/logorental.png',
+            height: 40,
+            errorBuilder: (context, error, stackTrace) {
+              return const Text(
+                'Rental',
+                style: TextStyle(fontSize: 22, color: Colors.black),
+              );
+            },
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search, color: Colors.black),
+            onPressed: () {},
+          ),
+        ],
+      ),
       bottomNavigationBar: CustomNavBar(
         selectedIndex: _selectedIndex,
         onTap: _onItemTapped,
@@ -94,25 +96,35 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
     );
   }
 
-  Widget categoriaItem(BuildContext context, IconData icon, String titulo) {
+  Widget categoriaItem(BuildContext context, String imagenPath, String titulo, bool esAutomovil) {
     return GestureDetector(
       onTap: () {
-        if (titulo == 'Automóvil') {
+        if (esAutomovil) {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const PaginaVehiculos()),
           );
         }
       },
-      child: Card(
-        elevation: 3,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF050272), // Color azul oscuro #050272
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.3),
+              spreadRadius: 2,
+              blurRadius: 5,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 50, color: Colors.blue.shade900),
+            Image.asset(imagenPath, height: 50),
             const SizedBox(height: 10),
-            Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
           ],
         ),
       ),
@@ -121,6 +133,8 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
 
   Widget ofertaItem(String titulo, String propietario, String imagen) {
     return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       child: ListTile(
         leading: Image.asset(
           imagen,
