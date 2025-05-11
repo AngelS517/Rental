@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // <-- Necesario para cambiar el color de la barra de estado
 import 'package:rental/widgets/custom_widgets.dart';
-import 'pagina_automoviles.dart'; 
+import 'pagina_automoviles.dart';
 
 class PaginaPrincipal extends StatefulWidget {
   const PaginaPrincipal({super.key});
@@ -10,11 +11,21 @@ class PaginaPrincipal extends StatefulWidget {
 }
 
 class _PaginaPrincipalState extends State<PaginaPrincipal> {
-  int _selectedIndex = 0; // Índice para "Inicio"
+  int _selectedIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Cambiar color de la barra de estado
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Color(0xFF5A1EFF), // mismo color que el degradado inicial
+      statusBarIconBrightness: Brightness.light, // iconos en blanco
+    ));
+  }
 
   void _onItemTapped(int index) {
     if (index == 0) {
-      // No hace nada, ya estamos en Inicio
+      // Ya estamos en Inicio
     } else if (index == 1) {
       Navigator.pushNamed(context, '/mapa');
     } else if (index == 2) {
@@ -28,66 +39,104 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
+      body: SafeArea(
+        child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 80), // Espacio para el AppBar
-              const Text(
-                'Categorías',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              // Sección superior con logo y barra de búsqueda
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF5A1EFF), Color(0xFF9445F3)],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    // Círculo blanco alrededor del logo
+                    Container(
+                      width: 45,
+                      height: 45,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: ClipOval(
+                        child: Image.asset(
+                          'imagenes/logorental.png',
+                          width: 40,
+                          height: 40,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Icon(Icons.person, size: 40, color: Colors.grey);
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                        child: const TextField(
+                          decoration: InputDecoration(
+                            hintText: 'Buscar...',
+                            hintStyle: TextStyle(color: Colors.grey),
+                            prefixIcon: Icon(Icons.search, color: Colors.grey),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(vertical: 12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 10),
-              GridView.count(
-                crossAxisCount: 2,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: 10,
-                crossAxisSpacing: 10,
-                childAspectRatio: 1.2,
-                children: [
-                  categoriaItem(context, 'imagenes/auto.png', 'Automóvil', true),
-                  categoriaItem(context, 'imagenes/minivan.png', 'Minivan', false),
-                  categoriaItem(context, 'imagenes/moto.png', 'Moto', false),
-                  categoriaItem(context, 'imagenes/electricos.png', 'Electricos', false),
-                ],
+
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Categorías',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 10),
+                    GridView.count(
+                      crossAxisCount: 2,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      mainAxisSpacing: 10,
+                      crossAxisSpacing: 10,
+                      childAspectRatio: 1.2,
+                      children: [
+                        categoriaItem(context, 'imagenes/auto.png', 'Automóvil', true),
+                        categoriaItem(context, 'imagenes/minivan.png', 'Minivan', false),
+                        categoriaItem(context, 'imagenes/moto.png', 'Moto', false),
+                        categoriaItem(context, 'imagenes/electricos.png', 'Electricos', false),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Ofertas',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 10),
+                    ofertaItem('Chevrolet Kia', 'Dueño: Juan Sebastián', 'assets/carro1.png'),
+                    ofertaItem('Camioneta', 'Dueño: Ángel Santiago', 'assets/carro2.png'),
+                  ],
+                ),
               ),
-              const SizedBox(height: 20),
-              const Text(
-                'Ofertas',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 10),
-              ofertaItem('Chevrolet Kia', 'Dueño: Juan Sebastián', 'assets/carro1.png'),
-              ofertaItem('Camioneta', 'Dueño: Ángel Santiago', 'assets/carro2.png'),
             ],
           ),
         ),
-      ),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        title: Center(
-          child: Image.asset(
-            'imagenes/logorental.png',
-            height: 40,
-            errorBuilder: (context, error, stackTrace) {
-              return const Text(
-                'Rental',
-                style: TextStyle(fontSize: 22, color: Colors.black),
-              );
-            },
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search, color: Colors.black),
-            onPressed: () {},
-          ),
-        ],
       ),
       bottomNavigationBar: CustomNavBar(
         selectedIndex: _selectedIndex,
@@ -108,7 +157,7 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF050272), // Color azul oscuro #050272
+          color: const Color(0xFF050272),
           borderRadius: BorderRadius.circular(10),
           boxShadow: [
             BoxShadow(
@@ -124,7 +173,13 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
           children: [
             Image.asset(imagenPath, height: 50),
             const SizedBox(height: 10),
-            Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+            Text(
+              titulo,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
           ],
         ),
       ),

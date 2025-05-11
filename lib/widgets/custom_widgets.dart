@@ -9,25 +9,62 @@ class CustomNavBar extends StatelessWidget {
     required this.selectedIndex,
     required this.onTap,
   });
-//NavBar
+
   @override
   Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: selectedIndex,
-      onTap: onTap,
-      type: BottomNavigationBarType.fixed,
-      selectedFontSize: 14,
-      unselectedFontSize: 12,
-      selectedItemColor: Colors.blue.shade900, // Color para ítem seleccionado
-      unselectedItemColor: Colors.grey, // Color para ítems no seleccionados
-      backgroundColor: Colors.white, // Fondo de la barra
-      elevation: 8, // Sombra para mayor profundidad
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
-        BottomNavigationBarItem(icon: Icon(Icons.location_on), label: 'Mapa'),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
-        BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Favoritos'),
-      ],
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF6A11CB), Color(0xFF2575FC)], // Mismo color del AppBar
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: BottomNavigationBar(
+        currentIndex: selectedIndex,
+        onTap: onTap,
+        type: BottomNavigationBarType.fixed,
+        selectedFontSize: 14,
+        unselectedFontSize: 12,
+        selectedItemColor: Colors.white, // Ítem seleccionado resaltado
+        unselectedItemColor: Colors.white60, // Ítems no seleccionados
+        backgroundColor: Colors.transparent, // Fondo transparente para ver el gradiente
+        elevation: 8,
+        items: [
+          BottomNavigationBarItem(
+            icon: Image.asset(
+              'imagenes/inicio.png',
+              height: 24,
+              color: selectedIndex == 0 ? Colors.white : Colors.white60,
+            ),
+            label: 'Inicio',
+          ),
+          BottomNavigationBarItem(
+            icon: Image.asset(
+              'imagenes/alquilados.png',
+              height: 24,
+              color: selectedIndex == 1 ? Colors.white : Colors.white60,
+            ),
+            label: 'Alquilados',
+          ),
+          BottomNavigationBarItem(
+            icon: Image.asset(
+              'imagenes/publicados.png',
+              height: 24,
+              color: selectedIndex == 2 ? Colors.white : Colors.white60,
+            ),
+            label: 'Publicados',
+          ),
+          BottomNavigationBarItem(
+            icon: Image.asset(
+              'imagenes/perfil.png',
+              height: 24,
+              color: selectedIndex == 3 ? Colors.white : Colors.white60,
+            ),
+            label: 'Perfil',
+          ),
+        ],
+      ),
     );
   }
 }

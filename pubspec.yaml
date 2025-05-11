@@ -37,6 +37,7 @@ dependencies:
   cloud_firestore: ^5.6.6 #cambios y actualizacion de la base de datos
   geocoding: ^3.0.0 #cambios de direcciones a cordenadas especificas
   google_maps_flutter: ^2.12.1 #mapa en flutter
+  mapbox_maps_flutter: ^2.8.0
   
 
  
@@ -64,6 +65,10 @@ flutter:
     - imagenes/minivan.png
     - imagenes/moto.png
     - imagenes/electricos.png
+    - imagenes/inicio.png
+    - imagenes/publicados.png
+    - imagenes/alquilados.png
+    - imagenes/perfil.png
   uses-material-design: true
 
 
