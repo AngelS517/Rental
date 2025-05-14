@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:rental/widgets/custom_widgets.dart';
-import 'pagina_principal.dart'; // Cambiado de pagina_inicio.dart
+import 'pagina_principal.dart';
 
 class PaginaAgregar extends StatefulWidget {
   const PaginaAgregar({super.key});
@@ -12,124 +11,100 @@ class PaginaAgregar extends StatefulWidget {
 
 class _PaginaAgregarState extends State<PaginaAgregar> {
   final _formKey = GlobalKey<FormState>();
-  final Map<String, dynamic> _formData = {
-    'calificacion': '',
-    'categoria': '',
-    'ciudad': '',
-    'descripcion': '',
-    'direccion': '',
-    'dueno': '',
-    'imagen': '',
-    'marca': '',
-    'modelo': '',
-    'placa': '',
-    'precio': '',
-  };
+  final TextEditingController _calificacionController = TextEditingController();
+  final TextEditingController _categoriaController = TextEditingController();
+  final TextEditingController _ciudadController = TextEditingController();
+  final TextEditingController _descripcionController = TextEditingController();
+  final TextEditingController _direccionController = TextEditingController();
+  final TextEditingController _duenoController = TextEditingController();
+  final TextEditingController _imagenController = TextEditingController();
+  final TextEditingController _marcaController = TextEditingController();
+  final TextEditingController _modeloController = TextEditingController();
+  final TextEditingController _placaController = TextEditingController();
+  final TextEditingController _precioController = TextEditingController();
 
-  Future<void> _guardarEnFirebase() async {
+  Future<void> _registrarVehiculo() async {
+  if (_formKey.currentState!.validate()) {
     try {
       await FirebaseFirestore.instance.collection('Vehiculos').add({
-        'Calificacion': int.tryParse(_formData['calificacion']),
-        'Categoria': _formData['categoria'],
-        'Ciudad': _formData['ciudad'],
-        'Descripcion': _formData['descripcion'],
-        'Direccion': _formData['direccion'],
-        'Dueño': _formData['dueno'],
-        'Imagen': _formData['imagen'],
-        'Marca': _formData['marca'],
-        'Modelo': int.tryParse(_formData['modelo']),
-        'Placa': _formData['placa'],
-        'Precio': double.tryParse(_formData['precio']),
-        'fechaCreacion': FieldValue.serverTimestamp(),
+        'Calificacion': _calificacionController.text,
+        'Categoria': _categoriaController.text,
+        'Ciudad': _ciudadController.text,
+        'Descripcion': _descripcionController.text,
+        'Direccion': _direccionController.text,
+        'Dueño': _duenoController.text,
+        'Imagen': _imagenController.text,
+        'Marca': _marcaController.text,
+        'Modelo': _modeloController.text,
+        'Placa': _placaController.text,
+        'Precio': _precioController.text,
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vehículo agregado exitosamente')),
-      );
-
-      // Redirección a PaginaPrincipal
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const PaginaPrincipal()),
-      );
+      if (context.mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const PaginaPrincipal()),
+        );
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al guardar: $e')),
+        SnackBar(content: Text('Error al registrar: $e')),
       );
     }
   }
+}
 
-  Widget _campoTexto(String label, String clave, {TextInputType tipo = TextInputType.text}) {
-    return TextFormField(
-      keyboardType: tipo,
-      decoration: InputDecoration(labelText: label),
-      validator: (value) => value == null || value.isEmpty ? 'Campo obligatorio' : null,
-      onSaved: (value) => _formData[clave] = value ?? '',
-    );
-  }
-
-  void _onItemTapped(int index) {
-    Navigator.pushReplacementNamed(context, _getRouteForIndex(index));
-  }
-
-  String _getRouteForIndex(int index) {
-    switch (index) {
-      case 0:
-        return '/inicio';
-      case 1:
-        return '/mapa';
-      case 2:
-        return '/perfil';
-      case 3:
-        return '/favoritos';
-      default:
-        return '/inicio';
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Agregar Vehículo'),
-        backgroundColor: Colors.blue.shade900,
-        automaticallyImplyLeading: false,
+        title: const Text('Registrar Vehículo'),
+        backgroundColor: const Color(0xFF071082),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: ListView(
             children: [
-              _campoTexto('Calificación', 'calificacion', tipo: TextInputType.number),
-              _campoTexto('Categoría', 'categoria'),
-              _campoTexto('Ciudad', 'ciudad'),
-              _campoTexto('Descripción', 'descripcion'),
-              _campoTexto('Dirección', 'direccion'),
-              _campoTexto('Dueño', 'dueno'),
-              _campoTexto('Imagen (URL)', 'imagen'),
-              _campoTexto('Marca', 'marca'),
-              _campoTexto('Modelo', 'modelo', tipo: TextInputType.number),
-              _campoTexto('Placa', 'placa'),
-              _campoTexto('Precio', 'precio', tipo: TextInputType.number),
+              campoTexto('Calificación', _calificacionController),
+              campoTexto('Categoría', _categoriaController),
+              campoTexto('Ciudad', _ciudadController),
+              campoTexto('Descripción', _descripcionController),
+              campoTexto('Dirección', _direccionController),
+              campoTexto('Dueño', _duenoController),
+              campoTexto('Imagen (URL)', _imagenController),
+              campoTexto('Marca', _marcaController),
+              campoTexto('Modelo', _modeloController),
+              campoTexto('Placa', _placaController),
+              campoTexto('Precio', _precioController),
               const SizedBox(height: 20),
               ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    _formKey.currentState!.save();
-                    _guardarEnFirebase();
-                  }
-                },
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.blue.shade900),
-                child: const Text('Guardar en Firebase'),
-              )
+                onPressed: _registrarVehiculo,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF050272),
+                ),
+                child: const Text('Registrar'),
+              ),
             ],
           ),
         ),
       ),
-      bottomNavigationBar: CustomNavBar(
-        selectedIndex: -1,
-        onTap: _onItemTapped,
+    );
+  }
+
+  Widget campoTexto(String label, TextEditingController controller) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: TextFormField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+        ),
+        validator: (value) =>
+            value == null || value.isEmpty ? 'Campo requerido' : null,
       ),
     );
   }

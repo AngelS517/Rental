@@ -29,9 +29,9 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
     } else if (index == 1) {
       Navigator.pushNamed(context, '/mapa');
     } else if (index == 2) {
-      Navigator.pushNamed(context, '/perfil');
-    } else if (index == 3) {
       Navigator.pushNamed(context, '/favoritos');
+    } else if (index == 3) {
+      Navigator.pushNamed(context, '/perfil');
     }
   }
 

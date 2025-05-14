@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'encuesta.dart';
 import 'pagina_registro.dart';
+import 'global.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -163,6 +164,7 @@ class LoginPage extends StatelessWidget {
                               ),
                             );
                           }
+                          correoUsuarioGlobal = email;
                         },
                         child: const Text(
                           'Iniciar Sesión',
@@ -174,6 +176,7 @@ class LoginPage extends StatelessWidget {
                   const SizedBox(height: 20),
                   TextButton(
                     onPressed: () {
+                       
                       Navigator.push(
                         context,
                         MaterialPageRoute(
