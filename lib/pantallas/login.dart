@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'encuesta.dart';
 import 'pagina_registro.dart';
@@ -118,53 +119,59 @@ class LoginPage extends StatelessWidget {
                           String email = emailController.text.trim().toLowerCase();
                           String password = passwordController.text.trim();
 
-                          if (email.isNotEmpty && password.isNotEmpty) {
-                            try {
-                              final query = await FirebaseFirestore.instance
-                                  .collection('Usuarios')
-                                  .where('correo', isEqualTo: email)
-                                  .get();
-
-                              if (query.docs.isNotEmpty) {
-                                final userData = query.docs.first.data();
-                                final storedPassword = userData['password'];
-
-                                if (storedPassword == password) {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => const EncuestaPage(),
-                                    ),
-                                  );
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Contraseña incorrecta'),
-                                    ),
-                                  );
-                                }
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Correo no registrado'),
-                                  ),
-                                );
-                              }
-                            } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Error al iniciar sesión: $e'),
-                                ),
-                              );
-                            }
-                          } else {
+                          if (email.isEmpty || password.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text('Por favor, ingresa tu correo y contraseña'),
                               ),
                             );
+                            return;
                           }
-                          correoUsuarioGlobal = email;
+
+                          try {
+                            print('Intentando iniciar sesión con email: $email y password: $password'); // Depuración
+
+                            // Autenticación con Firebase Authentication directamente
+                            UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+                              email: email,
+                              password: password,
+                            );
+                            print('Usuario autenticado con UID: ${userCredential.user!.uid}'); // Depuración
+
+                            // Verificar si el usuario existe en Firestore
+                            DocumentSnapshot doc = await FirebaseFirestore.instance
+                                .collection('Usuarios')
+                                .doc(userCredential.user!.uid)
+                                .get();
+
+                            if (doc.exists) {
+                              print('Usuario encontrado en Firestore: ${doc.data()}'); // Depuración
+                              correoUsuarioGlobal = email;
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const EncuestaPage(),
+                                ),
+                              );
+                            } else {
+                              print('Usuario no encontrado en Firestore'); // Depuración
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Usuario no encontrado en Firestore')),
+                              );
+                            }
+                          } catch (e) {
+                            print('Error al iniciar sesión: $e'); // Depuración
+                            String errorMessage = 'Error al iniciar sesión';
+                            if (e.toString().contains('invalid-credential') || 
+                                e.toString().contains('user-not-found')) {
+                              errorMessage = 'Correo no registrado';
+                            } else if (e.toString().contains('wrong-password')) {
+                              errorMessage = 'Contraseña incorrecta';
+                            }
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(errorMessage)),
+                            );
+                          }
                         },
                         child: const Text(
                           'Iniciar Sesión',
@@ -176,7 +183,6 @@ class LoginPage extends StatelessWidget {
                   const SizedBox(height: 20),
                   TextButton(
                     onPressed: () {
-                       
                       Navigator.push(
                         context,
                         MaterialPageRoute(

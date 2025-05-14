@@ -38,6 +38,7 @@ dependencies:
   geocoding: ^3.0.0 #cambios de direcciones a cordenadas especificas
   google_maps_flutter: ^2.12.1 #mapa en flutter
   mapbox_maps_flutter: ^2.8.0
+  firebase_auth: ^5.5.3
   
 
  
