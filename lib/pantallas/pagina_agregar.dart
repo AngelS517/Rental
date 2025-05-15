@@ -12,7 +12,6 @@ class PaginaAgregar extends StatefulWidget {
 class _PaginaAgregarState extends State<PaginaAgregar> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _calificacionController = TextEditingController();
-  final TextEditingController _categoriaController = TextEditingController();
   final TextEditingController _ciudadController = TextEditingController();
   final TextEditingController _descripcionController = TextEditingController();
   final TextEditingController _direccionController = TextEditingController();
@@ -23,37 +22,38 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
   final TextEditingController _placaController = TextEditingController();
   final TextEditingController _precioController = TextEditingController();
 
-  Future<void> _registrarVehiculo() async {
-  if (_formKey.currentState!.validate()) {
-    try {
-      await FirebaseFirestore.instance.collection('Vehiculos').add({
-        'Calificacion': _calificacionController.text,
-        'Categoria': _categoriaController.text,
-        'Ciudad': _ciudadController.text,
-        'Descripcion': _descripcionController.text,
-        'Direccion': _direccionController.text,
-        'Dueño': _duenoController.text,
-        'Imagen': _imagenController.text,
-        'Marca': _marcaController.text,
-        'Modelo': _modeloController.text,
-        'Placa': _placaController.text,
-        'Precio': _precioController.text,
-      });
+  String? _categoriaSeleccionada;
 
-      if (context.mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const PaginaPrincipal()),
+  Future<void> _registrarVehiculo() async {
+    if (_formKey.currentState!.validate()) {
+      try {
+        await FirebaseFirestore.instance.collection('Vehiculos').add({
+          'Calificacion': _calificacionController.text,
+          'Categoria': _categoriaSeleccionada,
+          'Ciudad': _ciudadController.text,
+          'Descripcion': _descripcionController.text,
+          'Direccion': _direccionController.text,
+          'Dueño': _duenoController.text,
+          'Imagen': _imagenController.text,
+          'Marca': _marcaController.text,
+          'Modelo': _modeloController.text,
+          'Placa': _placaController.text,
+          'Precio': _precioController.text,
+        });
+
+        if (context.mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const PaginaPrincipal()),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al registrar: $e')),
         );
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al registrar: $e')),
-      );
     }
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +69,7 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
           child: ListView(
             children: [
               campoTexto('Calificación', _calificacionController),
-              campoTexto('Categoría', _categoriaController),
+              dropdownCategoria(),
               campoTexto('Ciudad', _ciudadController),
               campoTexto('Descripción', _descripcionController),
               campoTexto('Dirección', _direccionController),
@@ -105,6 +105,33 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
         ),
         validator: (value) =>
             value == null || value.isEmpty ? 'Campo requerido' : null,
+      ),
+    );
+  }
+
+  Widget dropdownCategoria() {
+    final categorias = ['Automoviles', 'Minivan', 'Motocicletas', 'Electricos'];
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: DropdownButtonFormField<String>(
+        decoration: const InputDecoration(
+          labelText: 'Categoría',
+          border: OutlineInputBorder(),
+        ),
+        value: _categoriaSeleccionada,
+        onChanged: (value) {
+          setState(() {
+            _categoriaSeleccionada = value;
+          });
+        },
+        items: categorias.map((categoria) {
+          return DropdownMenuItem(
+            value: categoria,
+            child: Text(categoria),
+          );
+        }).toList(),
+        validator: (value) =>
+            value == null || value.isEmpty ? 'Seleccione una categoría' : null,
       ),
     );
   }

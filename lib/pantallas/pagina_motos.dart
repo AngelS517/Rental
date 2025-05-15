@@ -3,16 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:rental/widgets/custom_widgets.dart'; 
 
-// Componente principal que muestra la lista de vehículos
-class PaginaVehiculos extends StatefulWidget {
-  const PaginaVehiculos({super.key}); //constructor
+// Componente principal que muestra la lista de motocicletas
+class PaginaMotos extends StatefulWidget {
+  const PaginaMotos({super.key}); //constructor
 
   @override
-  State<PaginaVehiculos> createState() => _PaginaVehiculosState(); // Crea el estado para el widget
+  State<PaginaMotos> createState() => _PaginaMotosState(); // Crea el estado para el widget
 }
 
-// Estado de la página de vehículos
-class _PaginaVehiculosState extends State<PaginaVehiculos> {
+// Estado de la página de motocicletas
+class _PaginaMotosState extends State<PaginaMotos> {
   int _selectedIndex = 0; // Índice del ítem seleccionado en la barra inferior
 
   // Método que maneja la navegación al tocar un ítem de la barra inferior
@@ -33,7 +33,7 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
     return Scaffold(
       // Barra superior
       appBar: AppBar(
-        title: const Text('Lista de Automóviles'),
+        title: const Text('Lista de Motocicletas'),
         titleTextStyle: const TextStyle(
           color: Colors.white,
           fontSize: 20,
@@ -45,11 +45,10 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
 
       // Cuerpo principal: StreamBuilder escucha los cambios en Firestore en tiempo real
       body: StreamBuilder<QuerySnapshot>(
-        stream:
-            FirebaseFirestore.instance
-                .collection('Vehiculos')
-                .where('Categoria', isEqualTo: 'Automovil')
-                .snapshots(),
+        stream: FirebaseFirestore.instance
+            .collection('Vehiculos')
+            .where('Categoria', isEqualTo: 'Motocicletas')
+            .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
@@ -60,7 +59,7 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
           }
 
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text('No hay automóviles disponibles.'));
+            return const Center(child: Text('No hay motocicletas disponibles.'));
           }
 
           final vehiculos = snapshot.data!.docs;
@@ -90,7 +89,7 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
     );
   }
 
-  // Widget personalizado para mostrar cada tarjeta de vehículo con botón "Ver ubicación"
+  // Widget personalizado para mostrar cada tarjeta de motocicleta con botón "Ver ubicación"
   Widget vehiculoItem(
     String titulo,
     String propietario,

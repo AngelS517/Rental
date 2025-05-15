@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // <-- Necesario para cambiar el color de la barra de estado
 import 'package:rental/widgets/custom_widgets.dart';
 import 'pagina_automoviles.dart';
+import 'pagina_motos.dart';
 
 class PaginaPrincipal extends StatefulWidget {
   const PaginaPrincipal({super.key});
@@ -18,8 +19,8 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
     super.initState();
     // Cambiar color de la barra de estado
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: Color(0xFF5A1EFF), // mismo color que el degradado inicial
-      statusBarIconBrightness: Brightness.light, // iconos en blanco
+      statusBarColor: Color(0xFF5A1EFF),
+      statusBarIconBrightness: Brightness.light,
     ));
   }
 
@@ -56,7 +57,6 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
                 ),
                 child: Row(
                   children: [
-                    // Círculo blanco alrededor del logo
                     Container(
                       width: 45,
                       height: 45,
@@ -97,7 +97,6 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
                   ],
                 ),
               ),
-
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
@@ -152,6 +151,11 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const PaginaVehiculos()),
+          );
+        } else if (titulo == 'Moto') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const PaginaMotos()),
           );
         }
       },
