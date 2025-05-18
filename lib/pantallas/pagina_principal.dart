@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // <-- Necesario para cambiar el color de la barra de estado
+import 'package:flutter/services.dart';
 import 'package:rental/widgets/custom_widgets.dart';
 import 'pagina_automoviles.dart';
 import 'pagina_motos.dart';
@@ -17,7 +17,6 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
   @override
   void initState() {
     super.initState();
-    // Cambiar color de la barra de estado
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Color(0xFF5A1EFF),
       statusBarIconBrightness: Brightness.light,
@@ -26,7 +25,7 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
 
   void _onItemTapped(int index) {
     if (index == 0) {
-      // Ya estamos en Inicio
+      // Inicio
     } else if (index == 1) {
       Navigator.pushNamed(context, '/mapa');
     } else if (index == 2) {
@@ -41,64 +40,47 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Sección superior con logo y barra de búsqueda
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF5A1EFF), Color(0xFF9445F3)],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 45,
-                      height: 45,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: ClipOval(
-                        child: Image.asset(
-                          'imagenes/logorental.png',
-                          width: 40,
-                          height: 40,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Icon(Icons.person, size: 40, color: Colors.grey);
-                          },
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(25),
-                        ),
-                        child: const TextField(
-                          decoration: InputDecoration(
-                            hintText: 'Buscar...',
-                            hintStyle: TextStyle(color: Colors.grey),
-                            prefixIcon: Icon(Icons.search, color: Colors.grey),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(vertical: 12),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+        child: Column(
+          children: [
+            // Parte superior con gradiente y solo el logo
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF5A1EFF), Color(0xFF9445F3)],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Container(
+                  width: 45,
+                  height: 45,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: ClipOval(
+                    child: Image.asset(
+                      'imagenes/logorental.png',
+                      width: 40,
+                      height: 40,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(Icons.person, size: 40, color: Colors.grey);
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // Contenido desplazable
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -133,8 +115,8 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
                   ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
       bottomNavigationBar: CustomNavBar(

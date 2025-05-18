@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'encuesta.dart';
+import 'pagina_principal.dart';
 import 'pagina_registro.dart';
 import 'global.dart';
 
@@ -150,7 +150,7 @@ class LoginPage extends StatelessWidget {
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const EncuestaPage(),
+                                  builder: (context) => const PaginaPrincipal(),
                                 ),
                               );
                             } else {
@@ -213,7 +213,7 @@ class LoginPage extends StatelessWidget {
                 ],
               ),
             ),
-          ],
+          ],  
         ),
       ),
     );

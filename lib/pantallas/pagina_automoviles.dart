@@ -31,55 +31,108 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Barra superior
-      appBar: AppBar(
-        title: const Text('Lista de Automóviles'),
-        titleTextStyle: const TextStyle(
-          color: Colors.white,
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
+      // AppBar personalizado
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(100),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF0D47A1), Color(0xFF7B1FA2)],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(20),
+              bottomRight: Radius.circular(20),
+            ),
+          ),
+          child: SafeArea(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Logo en círculo blanco
+                Container(
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                  ),
+                  padding: const EdgeInsets.all(8),
+                  child: Image.asset(
+                    'imagenes/logorental.png',
+                    height: 40,
+                  ),
+                ),
+                const Text(
+                  'Lista de Automóviles',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                // Se eliminó la imagen de categoría de aquí
+              ],
+            ),
+          ),
         ),
-        backgroundColor: Colors.blue.shade900,
-        automaticallyImplyLeading: false,
       ),
 
-      // Cuerpo principal: StreamBuilder escucha los cambios en Firestore en tiempo real
-      body: StreamBuilder<QuerySnapshot>(
-        stream:
-            FirebaseFirestore.instance
-                .collection('Vehiculos')
-                .where('Categoria', isEqualTo: 'Automovil')
-                .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
+      // Cuerpo principal
+      body: Column(
+        children: [
+          // Imagen de categoría alineada a la derecha debajo del AppBar
+          Padding(
+            padding: const EdgeInsets.only(top: 10, right: 16),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Image.asset(
+                'imagenes/categoria.png',
+                height: 32,
+              ),
+            ),
+          ),
 
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+          // Lista de vehículos con StreamBuilder
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('Vehiculos')
+                  .where('Categoria', isEqualTo: 'Automovil')
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
 
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text('No hay automóviles disponibles.'));
-          }
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-          final vehiculos = snapshot.data!.docs;
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Center(child: Text('No hay automóviles disponibles.'));
+                }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: vehiculos.length,
-            itemBuilder: (context, index) {
-              final data = vehiculos[index].data() as Map<String, dynamic>;
-              return vehiculoItem(
-                data['Marca'] ?? 'Sin marca',
-                'Dueño: ${data['Dueño'] ?? 'Desconocido'}',
-                data['Imagen'] ?? '',
-                data['Direccion'] ?? 'Dirección no disponible',
-                data['Ciudad'] ?? 'Ciudad no disponible',
-              );
-            },
-          );
-        },
+                final vehiculos = snapshot.data!.docs;
+
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: vehiculos.length,
+                  itemBuilder: (context, index) {
+                    final data = vehiculos[index].data() as Map<String, dynamic>;
+                    return vehiculoItem(
+                      data['Marca'] ?? 'Sin marca',
+                      'Dueño: ${data['Dueño'] ?? 'Desconocido'}',
+                      data['Imagen'] ?? '',
+                      data['Direccion'] ?? 'Dirección no disponible',
+                      data['Ciudad'] ?? 'Ciudad no disponible',
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
 
       // Barra de navegación inferior personalizada

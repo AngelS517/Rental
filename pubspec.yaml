@@ -33,11 +33,13 @@ dependencies:
   flutter_map: ^8.1.1  # Flutter Map para OpenStreetMap
   location: ^8.0.0  # Para obtener la ubicación del usuario
 
-  cupertino_icons: ^1.0.8
+  cupertino_icons: ^1.0.8 
   cloud_firestore: ^5.6.6 #cambios y actualizacion de la base de datos
   geocoding: ^3.0.0 #cambios de direcciones a cordenadas especificas
   google_maps_flutter: ^2.12.1 #mapa en flutter
-  mapbox_maps_flutter: ^2.8.0
+  mapbox_maps_flutter: ^2.0.0  # Usa la última versión disponible
+  permission_handler: ^11.3.1
+  geolocator: ^14.0.0
   firebase_auth: ^5.5.3
   
 
@@ -60,8 +62,6 @@ dev_dependencies:
 flutter:
   assets:
     - imagenes/logorental.png
-    - imagenes/necesito_vehiculo.png
-    - imagenes/ofrecer_vehiculo.png
     - imagenes/auto.png
     - imagenes/minivan.png
     - imagenes/moto.png
@@ -70,6 +70,9 @@ flutter:
     - imagenes/publicados.png
     - imagenes/alquilados.png
     - imagenes/perfil.png
+    - imagenes/cercano.png
+    - imagenes/estadisticas.png
+    - imagenes/categoria.png
   uses-material-design: true
 
 

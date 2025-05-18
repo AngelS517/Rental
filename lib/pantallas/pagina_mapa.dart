@@ -1,105 +1,180 @@
-// Importación de paquetes necesarios para la interfaz, el mapa y la ubicación
+// Importaciones necesarias
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
-import 'package:location/location.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox_gl;
+import 'package:permission_handler/permission_handler.dart';
+import 'package:geolocator/geolocator.dart' as geo;
+import 'package:flutter/services.dart';
+import 'package:rental/widgets/custom_widgets.dart';
 
-// Widget con estado que mostrará un mapa con la ubicación actual del usuario
 class PaginaMapa extends StatefulWidget {
   const PaginaMapa({Key? key}) : super(key: key);
 
   @override
-  _PaginaMapaState createState() => _PaginaMapaState();
+  State<PaginaMapa> createState() => _PaginaMapaState();
 }
 
-// Estado de la clase PaginaMapa
 class _PaginaMapaState extends State<PaginaMapa> {
-  final MapController _mapController = MapController(); // Controlador para el mapa
-  LatLng? _currentLocation; // Variable para guardar la ubicación actual del usuario
-  bool _loading = true; // Bandera para mostrar cargando mientras se obtiene la ubicación
+  mapbox_gl.MapboxMap? _mapboxMap;
+  int _selectedIndex = 1; // Índice inicial para la página del mapa (ícono de mapa)
 
   @override
   void initState() {
     super.initState();
-    _getUserLocation(); // Llamamos a la función para obtener la ubicación al iniciar
+    _checkAndRequestPermissions();
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Color(0xFF5A1EFF),
+      statusBarIconBrightness: Brightness.light,
+    ));
   }
 
-  // Función asincrónica para obtener la ubicación del usuario
-  Future<void> _getUserLocation() async {
-    Location location = Location(); // Instancia del paquete Location
+  // Función para solicitar permisos de ubicación
+  Future<void> _checkAndRequestPermissions() async {
+    await Permission.locationWhenInUse.request();
+    await geo.Geolocator.requestPermission();
+  }
 
-    try {
-      // Verifica si el servicio de ubicación está habilitado
-      bool serviceEnabled = await location.serviceEnabled();
-      if (!serviceEnabled) {
-        serviceEnabled = await location.requestService(); // Pide al usuario que lo habilite
-        if (!serviceEnabled) return; // Si no lo habilita, salimos de la función
+  // Función para centrar el mapa en la ubicación actual
+  Future<void> _centerToUserLocation() async {
+    bool serviceEnabled = await geo.Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      print("Los servicios de ubicación están deshabilitados.");
+      return;
+    }
+
+    geo.LocationPermission permission = await geo.Geolocator.checkPermission();
+    if (permission == geo.LocationPermission.denied) {
+      permission = await geo.Geolocator.requestPermission();
+      if (permission == geo.LocationPermission.denied) {
+        print("Permiso de ubicación denegado.");
+        return;
       }
+    }
 
-      // Verifica permisos de ubicación
-      PermissionStatus permissionGranted = await location.hasPermission();
-      if (permissionGranted == PermissionStatus.denied) {
-        permissionGranted = await location.requestPermission(); // Pide permiso si está denegado
-        if (permissionGranted != PermissionStatus.granted) return;
-      }
+    final position = await geo.Geolocator.getCurrentPosition(
+      desiredAccuracy: geo.LocationAccuracy.high,
+    );
 
-      // Obtiene los datos de la ubicación actual
-      final locationData = await location.getLocation();
-      setState(() {
-        _currentLocation = LatLng(locationData.latitude!, locationData.longitude!); // Guarda la ubicación
-        _loading = false; // Ya no está cargando
-      });
+    _mapboxMap?.flyTo(
+      mapbox_gl.CameraOptions(
+        center: mapbox_gl.Point(
+          coordinates: mapbox_gl.Position(position.longitude, position.latitude),
+        ),
+        zoom: 15.0,
+      ),
+      mapbox_gl.MapAnimationOptions(duration: 1500),
+    );
+  }
 
-      _mapController.move(_currentLocation!, 14.0); // Mueve el mapa a la ubicación del usuario con zoom 14
-    } catch (e) {
-      print("Error al obtener la ubicación: $e"); // Captura errores y los imprime en consola
-      setState(() => _loading = false); // Detiene el indicador de carga
+  // Cuando se crea el mapa
+  void _onMapCreated(mapbox_gl.MapboxMap mapboxMap) async {
+    _mapboxMap = mapboxMap;
+
+    await mapboxMap.location.updateSettings(
+      mapbox_gl.LocationComponentSettings(
+        enabled: true,
+        pulsingEnabled: true,
+      ),
+    );
+
+    _centerToUserLocation(); // Centrar automáticamente en la ubicación actual
+  }
+
+  void _onItemTapped(int index) {
+    if (index == 0) {
+      Navigator.pushNamed(context, '/inicio');
+    } else if (index == 1) {
+      // Ya estamos en la página del mapa
+    } else if (index == 2) {
+      Navigator.pushNamed(context, '/favoritos');
+    } else if (index == 3) {
+      Navigator.pushNamed(context, '/perfil');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Mapa de ubicación usuario"),
-        automaticallyImplyLeading: false, // Oculta el botón de retroceso del AppBar
-      ),
-      // Si está cargando, muestra un spinner, si no, muestra el mapa
-      body: _loading
-          ? const Center(child: CircularProgressIndicator()) // Indicador de carga
-          : FlutterMap(
-              mapController: _mapController, // Controlador del mapa
-              options: MapOptions(
-                initialCenter: _currentLocation!, // Centra el mapa en la ubicación del usuario
-                initialZoom: 14.0, // Nivel de zoom inicial
-                interactionOptions: const InteractionOptions(
-                  flags: InteractiveFlag.all, // Permite todas las interacciones (zoom, mover, etc.)
-                ),
-              ),
+      // AppBar con degradado y logo
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            title: Row(
               children: [
-                // Capa que carga los tiles (imágenes) de OpenStreetMap
-                TileLayer(
-                  urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", // URL base 
-                  subdomains: const ['a', 'b', 'c'], // Subdominios 
-                  userAgentPackageName: 'com.example.rental', 
+                Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: Image.asset(
+                    'imagenes/logorental.png', // asegúrate de tener esta imagen
+                    height: 40,
+                  ),
                 ),
-                // Capa de marcadoresx
-                MarkerLayer(
-                  markers: [
-                    Marker(
-                      width: 80.0,
-                      height: 80.0,
-                      point: _currentLocation!, // Posición del marcador (ubicación actual)
-                      child: const Icon(
-                        Icons.location_on,
-                        color: Colors.red, // Icono rojo para marcar la ubicación
-                        size: 40.0,
-                      ),
-                    ),
-                  ],
+                const Text(
+                  'Cercanos a ti',
+                  style: TextStyle(color: Colors.white), // Texto blanco
                 ),
               ],
             ),
+            automaticallyImplyLeading: false,
+          ),
+        ),
+      ),
+
+      body: Stack(
+        children: [
+          // Mapa con bordes redondeados y tamaño reducido
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: SizedBox(
+              height: 400, // Tamaño más pequeño
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: mapbox_gl.MapWidget(
+                  onMapCreated: _onMapCreated,
+                  cameraOptions: mapbox_gl.CameraOptions(
+                    center: mapbox_gl.Point(
+                      coordinates: mapbox_gl.Position(-74.0060, 40.7128),
+                    ),
+                    zoom: 10.0,
+                  ),
+                  styleUri: mapbox_gl.MapboxStyles.MAPBOX_STREETS,
+                ),
+              ),
+            ),
+          ),
+
+          // Botón "Centrar"
+          Positioned(
+            bottom: 30,
+            right: 30,
+            child: ElevatedButton.icon(
+              onPressed: _centerToUserLocation,
+              icon: const Icon(Icons.my_location),
+              label: const Text('Centrar'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2575FC),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: CustomNavBar(
+        selectedIndex: _selectedIndex,
+        onTap: _onItemTapped,
+      ),
     );
   }
 }

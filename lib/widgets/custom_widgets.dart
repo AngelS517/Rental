@@ -41,19 +41,19 @@ class CustomNavBar extends StatelessWidget {
           ),
           BottomNavigationBarItem(
             icon: Image.asset(
-              'imagenes/alquilados.png',
+              'imagenes/cercano.png',
               height: 24,
               color: selectedIndex == 1 ? Colors.white : Colors.white60,
             ),
-            label: 'Alquilados',
+            label: 'Cercanos',
           ),
           BottomNavigationBarItem(
             icon: Image.asset(
-              'imagenes/publicados.png',
+              'imagenes/alquilados.png',
               height: 24,
               color: selectedIndex == 2 ? Colors.white : Colors.white60,
             ),
-            label: 'Publicados',
+            label: 'Alquilados',
           ),
           BottomNavigationBarItem(
             icon: Image.asset(
