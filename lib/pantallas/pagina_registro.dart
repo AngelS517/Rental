@@ -1,14 +1,32 @@
 
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Añadido para usar Firebase Authentication
-import 'login.dart'; // Añadido para la navegación
+import 'package:firebase_auth/firebase_auth.dart';
+import 'login.dart';
 
-class RegistroPage extends StatelessWidget {
+class RegistroPage extends StatefulWidget {
   const RegistroPage({super.key});
 
-  //Este codigo le da los requriminetos minimos de la contraseña
+  @override
+  State<RegistroPage> createState() => _RegistroPageState();
+}
+
+class _RegistroPageState extends State<RegistroPage> {
+  final nombreController = TextEditingController();
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+  final confirmPasswordController = TextEditingController();
+  final telefonoController = TextEditingController();
+  final fechaNacimientoController = TextEditingController();
+  final direccionController = TextEditingController();
+  final barrioController = TextEditingController();
+  final ciudadController = TextEditingController();
+
+  String? ciudadSeleccionada;
+  String? propositoSeleccionado;
+  bool cargando = false;
+  bool aceptaPolitica = false;
+
   bool validarPassword(String password) {
     final RegExp regex = RegExp(
       r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#\$&*~]).{8,}$',
@@ -16,203 +34,278 @@ class RegistroPage extends StatelessWidget {
     return regex.hasMatch(password);
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final TextEditingController nombreController = TextEditingController();
-    final TextEditingController emailController = TextEditingController();
-    final TextEditingController passwordController = TextEditingController();
-    final TextEditingController confirmPasswordController = TextEditingController();
-    final TextEditingController telefonoController = TextEditingController();
-    final TextEditingController fechaNacimientoController = TextEditingController();
-    final TextEditingController direccionController = TextEditingController();
+  Future<void> _selectDate() async {
+    DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime(2000),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (pickedDate != null) {
+      setState(() {
+        fechaNacimientoController.text =
+            '${pickedDate.day}/${pickedDate.month}/${pickedDate.year}';
+      });
+    }
+  }
 
-    Future<void> _selectDate(BuildContext context) async {
-      DateTime? pickedDate = await showDatePicker(
-        context: context,
-        initialDate: DateTime.now(),
-        firstDate: DateTime(1900),
-        lastDate: DateTime.now(),
-      );
+  void mostrarMensaje(String texto) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(texto)),
+    );
+  }
 
-      if (pickedDate != null) {
-        fechaNacimientoController.text = '${pickedDate.day}/${pickedDate.month}/${pickedDate.year}';
-      }
+  Future<void> registrarUsuario() async {
+    final nombre = nombreController.text.trim();
+    final correo = emailController.text.trim().toLowerCase();
+    final telefono = telefonoController.text.trim();
+    final fechaNacimiento = fechaNacimientoController.text.trim();
+    final direccion = direccionController.text.trim();
+    final barrio = barrioController.text.trim();
+    final ciudad = ciudadController.text.trim();
+    final pass = passwordController.text;
+    final confirmPass = confirmPasswordController.text;
+
+    if ([nombre, correo, telefono, fechaNacimiento, direccion, barrio, ciudad, pass, confirmPass].contains('') ||
+        propositoSeleccionado == null) {
+      mostrarMensaje('Por favor, completa todos los campos');
+      return;
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Registro'),
-        backgroundColor: Colors.blue.shade900,
+    if (pass != confirmPass) {
+      mostrarMensaje('Las contraseñas no coinciden');
+      return;
+    }
+
+    if (!validarPassword(pass)) {
+      mostrarMensaje(
+          'La contraseña debe tener al menos 8 caracteres, incluir mayúsculas, minúsculas, números y un símbolo especial.');
+      return;
+    }
+
+    if (!aceptaPolitica) {
+      mostrarMensaje('Debes aceptar la política de privacidad para registrarte.');
+      return;
+    }
+
+    setState(() => cargando = true);
+
+    try {
+      final signInMethods =
+          await FirebaseAuth.instance.fetchSignInMethodsForEmail(correo);
+      if (signInMethods.isNotEmpty) {
+        mostrarMensaje('El correo ya está registrado. Intenta iniciar sesión.');
+        setState(() => cargando = false);
+        return;
+      }
+
+      UserCredential cred = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(email: correo, password: pass);
+
+      await FirebaseFirestore.instance
+          .collection('Usuarios')
+          .doc(cred.user!.uid)
+          .set({
+        'nombre': nombre,
+        'correo': correo,
+        'telefono': telefono,
+        'fechaNacimiento': fechaNacimiento,
+        'direccion': direccion,
+        'barrio': barrio,
+        'ciudad': ciudad,
+        'proposito': propositoSeleccionado,
+        'fechaRegistro': Timestamp.now(),
+        'password': pass,
+      });
+
+      mostrarMensaje('Registro exitoso');
+      Future.delayed(const Duration(seconds: 2), () {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+        );
+      });
+    } catch (e) {
+      mostrarMensaje('Error al registrar: ${e.toString()}');
+    } finally {
+      setState(() => cargando = false);
+    }
+  }
+
+  Widget _buildTextField(String label, TextEditingController controller,
+      {TextInputType tipo = TextInputType.text, bool esPassword = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: TextField(
+        controller: controller,
+        keyboardType: tipo,
+        obscureText: esPassword,
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+        ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: ListView(
-          children: [
-            const Text('Nombre'),
-            TextField(
-              controller: nombreController,
-              decoration: const InputDecoration(hintText: 'Tu nombre'),
-            ),
-            const SizedBox(height: 10),
-            const Text('Correo'),
-            TextField(
-              controller: emailController,
-              decoration: const InputDecoration(hintText: 'example@gmail.com'),
-            ),
-            const SizedBox(height: 10),
-            const Text('Número de teléfono'),
-            TextField(
-              controller: telefonoController,
-              keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(hintText: 'Número telefónico'),
-            ),
-            const SizedBox(height: 10),
-            const Text('Fecha de nacimiento'),
-            GestureDetector(
-              onTap: () => _selectDate(context),
-              child: AbsorbPointer(
-                child: TextField(
-                  controller: fechaNacimientoController,
-                  decoration: const InputDecoration(hintText: 'dd/mm/aaaa'),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF2A2E7F),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF2A2E7F), Color(0xFF1E2A6D)],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 6,
+                            offset: Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Image.asset('imagenes/logorental.png', height: 60),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Registro',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2A2E7F),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    _buildTextField('Nombre completo', nombreController),
+                    _buildTextField('Correo electrónico', emailController,
+                        tipo: TextInputType.emailAddress),
+                    _buildTextField('Número telefónico', telefonoController,
+                        tipo: TextInputType.phone),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: GestureDetector(
+                        onTap: _selectDate,
+                        child: AbsorbPointer(
+                          child: TextField(
+                            controller: fechaNacimientoController,
+                            decoration: const InputDecoration(
+                              labelText: 'Fecha de nacimiento',
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    _buildTextField('Dirección', direccionController),
+                    _buildTextField('Barrio', barrioController),
+                    _buildTextField('Ciudad', ciudadController),
+                    DropdownButtonFormField<String>(
+                      decoration: const InputDecoration(labelText: 'Propósito'),
+                      value: propositoSeleccionado,
+                      items: ['Cliente', 'Proveedor']
+                          .map((valor) => DropdownMenuItem(
+                                value: valor,
+                                child: Text(valor),
+                              ))
+                          .toList(),
+                      onChanged: (valor) {
+                        setState(() {
+                          propositoSeleccionado = valor;
+                        });
+                      },
+                    ),
+                    _buildTextField('Contraseña', passwordController,
+                        esPassword: true),
+                    _buildTextField('Confirmar contraseña', confirmPasswordController,
+                        esPassword: true),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Checkbox(
+                          value: aceptaPolitica,
+                          onChanged: (value) {
+                            setState(() {
+                              aceptaPolitica = value ?? false;
+                            });
+                          },
+                        ),
+                        Expanded(
+                          child: Text(
+                            'Al registrarte aceptas el uso de tus datos personales bajo la política de privacidad.',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    cargando
+                        ? const CircularProgressIndicator()
+                        : ElevatedButton(
+                            onPressed: aceptaPolitica ? registrarUsuario : null,
+                            style: ElevatedButton.styleFrom(
+                              padding: EdgeInsets.zero, // Quitar padding para que el Ink controle el tamaño
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)),
+                              side: const BorderSide(color: Colors.transparent),
+                              elevation: 0,
+                              foregroundColor: Colors.white,
+                              overlayColor: Colors.white.withOpacity(0.1),
+                            ),
+                            child: Ink(
+                              decoration: BoxDecoration(
+                                color: aceptaPolitica ? null : Colors.grey,
+                                gradient: aceptaPolitica
+                                    ? const LinearGradient(
+                                        colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      )
+                                    : null,
+                                borderRadius: const BorderRadius.all(Radius.circular(10)),
+                              ),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                                alignment: Alignment.center,
+                                child: const Text(
+                                  'Registrarme',
+                                  style: TextStyle(color: Colors.white, fontSize: 16),
+                                ),
+                              ),
+                            ),
+                          ),
+                  ],
                 ),
               ),
             ),
-            const SizedBox(height: 10),
-            const Text('Dirección'),
-            TextField(
-              controller: direccionController,
-              decoration: const InputDecoration(hintText: 'Tu dirección'),
-            ),
-            const SizedBox(height: 10),
-            const Text('Contraseña'),
-            TextField(
-              controller: passwordController,
-              obscureText: true,
-              decoration: const InputDecoration(hintText: '******'),
-            ),
-            const SizedBox(height: 10),
-            const Text('Confirmar Contraseña'),
-            TextField(
-              controller: confirmPasswordController,
-              obscureText: true,
-              decoration: const InputDecoration(hintText: '******'),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () async {
-                String nombre = nombreController.text.trim();
-                String correo = emailController.text.trim().toLowerCase(); // Estandarizar a minúsculas
-                String telefono = telefonoController.text.trim();
-                String fechaNacimiento = fechaNacimientoController.text.trim();
-                String direccion = direccionController.text.trim();
-                String pass = passwordController.text;
-                String confirmPass = confirmPasswordController.text;
-
-                if (nombre.isEmpty ||
-                    correo.isEmpty ||
-                    telefono.isEmpty ||
-                    fechaNacimiento.isEmpty ||
-                    direccion.isEmpty ||
-                    pass.isEmpty ||
-                    confirmPass.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Por favor, completa todos los campos'),
-                    ),
-                  );
-                  return;
-                }
-
-                if (pass != confirmPass) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Las contraseñas no coinciden'),
-                    ),
-                  );
-                  return;
-                }
-
-                if (!validarPassword(pass)) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                          'La contraseña debe tener al menos 8 caracteres, incluir mayúsculas, minúsculas, números y un símbolo especial.'),
-                    ),
-                  );
-                  return;
-                }
-
-                try {
-                  print('Registrando usuario en Firebase Authentication con correo: $correo'); // Depuración
-                  // Verificar si el correo ya está en uso (opcional, pero útil para depuración)
-                  final signInMethods = await FirebaseAuth.instance.fetchSignInMethodsForEmail(correo);
-                  if (signInMethods.isNotEmpty) {
-                    print('Correo ya registrado en Authentication: $signInMethods');
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('El correo ya está en uso')),
-                    );
-                    return;
-                  }
-
-                  // Crear usuario en Firebase Authentication
-                  UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-                    email: correo,
-                    password: pass,
-                  );
-                  print('Usuario creado en Firebase Authentication con UID: ${userCredential.user!.uid}'); // Depuración
-
-                  print('Guardando datos en Firestore para UID: ${userCredential.user!.uid}'); // Depuración
-                  // Guardar datos en Firestore usando el UID del usuario
-                  await FirebaseFirestore.instance.collection('Usuarios').doc(userCredential.user!.uid).set({
-                    'nombre': nombre,
-                    'correo': correo,
-                    'telefono': telefono,
-                    'fechaNacimiento': fechaNacimiento,
-                    'direccion': direccion,
-                    'password': pass, // Contraseña sin cifrar
-                    'fechaRegistro': Timestamp.now(),
-                  });
-                  print('Datos guardados en Firestore'); // Depuración
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Registro exitoso')),
-                  );
-
-                  Future.delayed(const Duration(seconds: 2), () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => const LoginPage()),
-                    );
-                  });
-                } catch (e) {
-                  print('Error al registrar: $e'); // Depuración
-                  if (FirebaseAuth.instance.currentUser != null) {
-                    await FirebaseAuth.instance.currentUser!.delete(); // Limpiar usuario si falla el registro
-                    print('Usuario eliminado debido a error'); // Depuración
-                  }
-                  String errorMessage = 'Error al registrar';
-                  if (e.toString().contains('email-already-in-use')) {
-                    errorMessage = 'El correo ya está en uso';
-                  } else if (e.toString().contains('invalid-email')) {
-                    errorMessage = 'El correo no es válido';
-                  } else if (e.toString().contains('weak-password')) {
-                    errorMessage = 'La contraseña es demasiado débil';
-                  }
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('$errorMessage: $e')),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue.shade900,
-                padding: const EdgeInsets.symmetric(vertical: 15),
-              ),
-              child: const Text(
-                'Registrarse',
-                style: TextStyle(color: Colors.white, fontSize: 18),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
