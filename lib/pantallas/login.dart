@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'pagina_principal.dart';
+import 'pagina_principal_provee.dart';
 import 'pagina_registro.dart';
 import 'global.dart';
 
@@ -19,23 +20,21 @@ class LoginPage extends StatelessWidget {
         child: Column(
           children: [
             const SizedBox(height: 60),
-            Center(
-              child: Image.asset('imagenes/logorental.png', height: 120),
-            ),
+            Center(child: Image.asset('imagenes/logorental.png', height: 120)),
             const SizedBox(height: 20),
             Container(
               decoration: const BoxDecoration(
-                color: Color(0xFF0A0C58), // Azul oscuro
+                color: Color(0xFF0A0C58),
                 borderRadius: BorderRadius.only(
-                  topRight: Radius.circular(80),   // curva grande arriba a la derecha
-                  bottomLeft: Radius.circular(80), // curva grande abajo a la izquierda
+                  topRight: Radius.circular(80),
+                  bottomLeft: Radius.circular(80),
                 ),
               ),
               padding: const EdgeInsets.only(
                 left: 30,
                 right: 30,
                 top: 40,
-                bottom: 80, // Aumentado para hacer el cuadro más largo en la parte inferior
+                bottom: 80,
               ),
               child: Column(
                 children: [
@@ -50,10 +49,7 @@ class LoginPage extends StatelessWidget {
                   const SizedBox(height: 5),
                   const Text(
                     'Bienvenido',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white70,
-                    ),
+                    style: TextStyle(fontSize: 16, color: Colors.white70),
                   ),
                   const SizedBox(height: 30),
                   TextField(
@@ -91,7 +87,6 @@ class LoginPage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 30),
-                  // Botón con degradado personalizado
                   SizedBox(
                     width: double.infinity,
                     child: DecoratedBox(
@@ -99,10 +94,7 @@ class LoginPage extends StatelessWidget {
                         gradient: const LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [
-                            Color(0xFF071082), // Azul profundo
-                            Color(0xFF7B43CD), // Morado
-                          ],
+                          colors: [Color(0xFF071082), Color(0xFF7B43CD)],
                         ),
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -116,56 +108,92 @@ class LoginPage extends StatelessWidget {
                           ),
                         ),
                         onPressed: () async {
-                          String email = emailController.text.trim().toLowerCase();
+                          String email =
+                              emailController.text.trim().toLowerCase();
                           String password = passwordController.text.trim();
 
                           if (email.isEmpty || password.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Por favor, ingresa tu correo y contraseña'),
+                                content: Text(
+                                  'Por favor, ingresa tu correo y contraseña',
+                                ),
                               ),
                             );
                             return;
                           }
 
                           try {
-                            print('Intentando iniciar sesión con email: $email y password: $password'); // Depuración
-
-                            // Autenticación con Firebase Authentication directamente
-                            UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-                              email: email,
-                              password: password,
+                            print(
+                              'Intentando iniciar sesión con email: $email y password: $password',
                             );
-                            print('Usuario autenticado con UID: ${userCredential.user!.uid}'); // Depuración
 
-                            // Verificar si el usuario existe en Firestore
-                            DocumentSnapshot doc = await FirebaseFirestore.instance
-                                .collection('Usuarios')
-                                .doc(userCredential.user!.uid)
-                                .get();
+                            UserCredential userCredential = await FirebaseAuth
+                                .instance
+                                .signInWithEmailAndPassword(
+                                  email: email,
+                                  password: password,
+                                );
+                            print(
+                              'Usuario autenticado con UID: ${userCredential.user!.uid}',
+                            );
+
+                            DocumentSnapshot doc =
+                                await FirebaseFirestore.instance
+                                    .collection('Usuarios')
+                                    .doc(userCredential.user!.uid)
+                                    .get();
 
                             if (doc.exists) {
-                              print('Usuario encontrado en Firestore: ${doc.data()}'); // Depuración
-                              correoUsuarioGlobal = email;
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const PaginaPrincipal(),
-                                ),
+                              print(
+                                'Usuario encontrado en Firestore: ${doc.data()}',
                               );
+                              correoUsuarioGlobal = email;
+
+                              // Guardar el propósito en variable global
+                              Map<String, dynamic> datos =
+                                  doc.data() as Map<String, dynamic>;
+                              propositoUsuarioGlobal = datos['proposito'] ?? '';
+
+                              // Redirigir según el propósito
+                              if (propositoUsuarioGlobal.toLowerCase() ==
+                                  'proveedor') {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder:
+                                        (context) =>
+                                            const PaginaPrincipalProveedor(),
+                                  ),
+                                );
+                              } else {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder:
+                                        (context) => const PaginaPrincipal(),
+                                  ),
+                                );
+                              }
                             } else {
-                              print('Usuario no encontrado en Firestore'); // Depuración
+                              print('Usuario no encontrado en Firestore');
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Usuario no encontrado en Firestore')),
+                                const SnackBar(
+                                  content: Text(
+                                    'Usuario no encontrado en Firestore',
+                                  ),
+                                ),
                               );
                             }
                           } catch (e) {
-                            print('Error al iniciar sesión: $e'); // Depuración
+                            print('Error al iniciar sesión: $e');
                             String errorMessage = 'Error al iniciar sesión';
-                            if (e.toString().contains('invalid-credential') || 
+                            if (e.toString().contains('invalid-credential') ||
                                 e.toString().contains('user-not-found')) {
                               errorMessage = 'Correo no registrado';
-                            } else if (e.toString().contains('wrong-password')) {
+                            } else if (e.toString().contains(
+                              'wrong-password',
+                            )) {
                               errorMessage = 'Contraseña incorrecta';
                             }
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -213,7 +241,7 @@ class LoginPage extends StatelessWidget {
                 ],
               ),
             ),
-          ],  
+          ],
         ),
       ),
     );
