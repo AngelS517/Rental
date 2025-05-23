@@ -21,11 +21,10 @@ class _PaginaPerfilState extends State<PaginaPerfil> {
 
   Future<void> obtenerDatosUsuario() async {
     try {
-      final query =
-          await FirebaseFirestore.instance
-              .collection('Usuarios')
-              .where('correo', isEqualTo: correoUsuarioGlobal)
-              .get();
+      final query = await FirebaseFirestore.instance
+          .collection('Usuarios')
+          .where('correo', isEqualTo: correoUsuarioGlobal)
+          .get();
 
       if (query.docs.isNotEmpty) {
         setState(() {
@@ -37,107 +36,205 @@ class _PaginaPerfilState extends State<PaginaPerfil> {
     }
   }
 
+  // Función para mostrar el diálogo de edición
+  Future<void> _mostrarDialogoEditarDatos(BuildContext context) async {
+    String? nombre = userData?['nombre'];
+    String? telefono = userData?['telefono'];
+    String? barrio = userData?['barrio'];
+    String? ciudad = userData?['ciudad'];
+
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        final TextEditingController nombreController = TextEditingController(text: nombre);
+        final TextEditingController telefonoController = TextEditingController(text: telefono);
+        final TextEditingController barrioController = TextEditingController(text: barrio);
+        final TextEditingController ciudadController = TextEditingController(text: ciudad);
+
+        return AlertDialog(
+          title: const Text('Editar Datos'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: nombreController,
+                  decoration: const InputDecoration(labelText: 'Nombre'),
+                ),
+                TextFormField(
+                  controller: telefonoController,
+                  decoration: const InputDecoration(labelText: 'Teléfono'),
+                ),
+                TextFormField(
+                  controller: barrioController,
+                  decoration: const InputDecoration(labelText: 'Barrio'),
+                ),
+                TextFormField(
+                  controller: ciudadController,
+                  decoration: const InputDecoration(labelText: 'Ciudad'),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              child: const Text('Cancelar'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            ElevatedButton(
+              child: const Text('Guardar'),
+              onPressed: () async {
+                try {
+                  final doc = await FirebaseFirestore.instance
+                      .collection('Usuarios')
+                      .where('correo', isEqualTo: correoUsuarioGlobal)
+                      .get();
+                  if (doc.docs.isNotEmpty) {
+                    await doc.docs.first.reference.update({
+                      'nombre': nombreController.text,
+                      'telefono': telefonoController.text,
+                      'barrio': barrioController.text,
+                      'ciudad': ciudadController.text,
+                    });
+                    setState(() {
+                      userData?['nombre'] = nombreController.text;
+                      userData?['telefono'] = telefonoController.text;
+                      userData?['barrio'] = barrioController.text;
+                      userData?['ciudad'] = ciudadController.text;
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Datos actualizados correctamente')),
+                    );
+                  }
+                  Navigator.of(context).pop();
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error al actualizar datos: $e')),
+                  );
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body:
-          userData == null
-              ? const Center(child: CircularProgressIndicator())
-              : SingleChildScrollView(
-                child: Column(
+    return userData == null
+        ? const Center(child: CircularProgressIndicator())
+        : SingleChildScrollView(
+            child: Column(
+              children: [
+                Stack(
                   children: [
-                    Stack(
-                      children: [
-                        Container(
-                          height: 200,
-                          decoration: const BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [Color(0xFF4B4EAB), Color(0xFF8B5CF6)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
+                    Container(
+                      height: 200,
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF4B4EAB), Color(0xFF8B5CF6)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 120,
+                      left: 0,
+                      right: 0,
+                      child: Center(
+                        child: CircleAvatar(
+                          radius: 50,
+                          backgroundColor: Colors.white,
+                          child: CircleAvatar(
+                            radius: 47,
+                            child: Icon(
+                              Icons.person,
+                              size: 50,
+                              color: Colors.grey[700],
                             ),
                           ),
                         ),
-                        Positioned(
-                          top: 120,
-                          left: 0,
-                          right: 0,
-                          child: Center(
-                            child: CircleAvatar(
-                              radius: 50,
-                              backgroundColor: Colors.white,
-                              child: CircleAvatar(
-                                radius: 47,
-                                backgroundImage: AssetImage(
-                                  "assets/avatar.png",
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 60),
-                    Text(
-                      userData?['nombre'] ?? '',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    sectionTitle("Información Personal"),
-                    infoItem("Nombre", userData?['nombre']),
-                    infoItem("Correo", userData?['correo']),
-                    infoItem("Teléfono", userData?['telefono']),
-                    infoItem("Fecha Nac", userData?['fecha_nacimiento']),
-                    infoItem("Dirección", userData?['direccion']),
-                    infoItem("Barrio", userData?['barrio']),
-                    infoItem("Ciudad", userData?['ciudad']),
-                    const SizedBox(height: 15),
-                    ElevatedButton(
-                      onPressed: () {
-                        // Acción para editar
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4B4EAB),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: const Text("Editar datos"),
-                    ),
-                    const SizedBox(height: 30),
-                    listTileItem(Icons.history, "Historial"),
-                    listTileItem(Icons.description, "Términos y condiciones"),
-
-                    /// 🔻🔻🔻 CIERRE DE SESIÓN AQUÍ 🔻🔻🔻
-                    ListTile(
-                      leading: const Icon(
-                        Icons.logout,
-                        color: Color(0xFF4B4EAB),
-                      ),
-                      title: const Text("Cerrar sesión"),
-                      trailing: const Icon(Icons.keyboard_arrow_right),
-                      onTap: () {
-                        // Aquí navegas al login, conservando los datos del usuario en memoria
-                        Navigator.pushAndRemoveUntil(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const LoginPage(),
-                          ),
-                          (Route<dynamic> route) => false,
-                        );
-                      },
-                    ),
-
-                    /// 🔺🔺🔺 FIN CIERRE DE SESIÓN 🔺🔺🔺
-                    const SizedBox(height: 30),
                   ],
                 ),
-              ),
-    );
+                const SizedBox(height: 60),
+                Text(
+                  userData?['nombre'] ?? '',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                sectionTitle("Información Personal"),
+                infoItem("Nombre", userData?['nombre']),
+                infoItem("Correo", userData?['correo']),
+                infoItem("Teléfono", userData?['telefono']),
+                infoItem("Fecha Nac", userData?['fechaNacimiento']),
+                infoItem("Dirección", userData?['direccion']),
+                infoItem("Barrio", userData?['barrio']),
+                infoItem("Ciudad", userData?['ciudad']),
+                const SizedBox(height: 15),
+                ElevatedButton(
+                  onPressed: () {
+                    // Acción para editar
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF4B4EAB),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: const Text("Editar datos"),
+                ),
+                const SizedBox(height: 30),
+                listTileItem(Icons.history, "Historial"),
+                listTileItem(Icons.description, "Términos y condiciones"),
+                // ListTile para editar datos
+                ListTile(
+                  leading: const Icon(
+                    Icons.edit,
+                    color: Color(0xFF4B4EAB),
+                  ),
+                  title: const Text(
+                    "Editar datos",
+                    style: TextStyle(color: Colors.black),
+                  ),
+                  trailing: const Icon(Icons.keyboard_arrow_right),
+                  onTap: () {
+                    _mostrarDialogoEditarDatos(context);
+                  },
+                ),
+                // Botón de cerrar sesión con texto negro
+                ListTile(
+                  leading: const Icon(
+                    Icons.logout,
+                    color: Color(0xFF4B4EAB),
+                  ),
+                  title: const Text(
+                    "Cerrar sesión",
+                    style: TextStyle(color: Colors.black),
+                  ),
+                  trailing: const Icon(Icons.keyboard_arrow_right),
+                  onTap: () {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const LoginPage(),
+                      ),
+                      (Route<dynamic> route) => false,
+                    );
+                  },
+                ),
+                const SizedBox(height: 30),
+              ],
+            ),
+          );
   }
 
   Widget sectionTitle(String title) {

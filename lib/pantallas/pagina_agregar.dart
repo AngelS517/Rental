@@ -91,6 +91,14 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
           ),
         ),
       ),
+      // Agregamos el FloatingActionButton aquí
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.pop(context); // Regresa a la pantalla anterior
+        },
+        child: const Icon(Icons.arrow_back),
+        backgroundColor: const Color(0xFF6A11CB),
+      ),
     );
   }
 

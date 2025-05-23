@@ -10,6 +10,7 @@ import 'pantallas/pagina_favoritos.dart';
 import 'pantallas/pagina_automoviles.dart';
 import 'pantallas/mapa_automovil.dart';
 
+
 // Importación de Mapbox
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 

@@ -1,81 +1,121 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:rental/widgets/custom_widgets_proveedor.dart';
 import 'global.dart';
-import 'pagina_perfil.dart'; // Asegúrate de importar esta página
-import 'pagina_agregar.dart'; // Importa aquí tu página agregar
+import 'pagina_perfil.dart';
+import 'publicados_proveedor.dart';
 
-class PaginaPrincipalProveedor extends StatelessWidget {
+class PaginaPrincipalProveedor extends StatefulWidget {
   const PaginaPrincipalProveedor({super.key});
 
   @override
+  _PaginaPrincipalProveedorState createState() => _PaginaPrincipalProveedorState();
+}
+
+class _PaginaPrincipalProveedorState extends State<PaginaPrincipalProveedor> {
+  int _selectedIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Color(0xFF5A1EFF),
+      statusBarIconBrightness: Brightness.light,
+    ));
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+
+    if (index == 0) {
+      // Inicio (mantener la pantalla actual)
+    } else if (index == 1) {
+      // Publicados (ya se muestra en el IndexedStack)
+    } else if (index == 2) {
+      Navigator.pushNamed(context, '/estadisticas');
+    } else if (index == 3) {
+      // Perfil (ya se muestra en el IndexedStack)
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // Títulos dinámicos para los índices que no son "Perfil"
+    final Map<int, String> titles = {
+      0: 'Página Principal - Proveedor',
+      1: 'Mis Vehículos Publicados',
+      2: 'Estadísticas',
+    };
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Inicio'),
-        backgroundColor: const Color(0xFF4B4EAB),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Bienvenido, tu propósito es: $propositoUsuarioGlobal',
-              style: const TextStyle(fontSize: 20),
-              textAlign: TextAlign.center,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF071082), Color(0xFF7B43CD)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const PaginaPerfil()),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF4B4EAB),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text(
-                'Ir a perfil',
-                style: TextStyle(color: Colors.white, fontSize: 16),
-              ),
-            ),
-            const SizedBox(height: 10),
-
-            /// 🔻 BOTÓN NUEVO: Ir a Agregar 🔻
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const PaginaAgregar(),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF4B4EAB),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text(
-                'Ir a agregar',
-                style: TextStyle(color: Colors.white, fontSize: 16),
-              ),
-            ),
-
-            /// 🔺 FIN BOTÓN NUEVO 🔺
-          ],
+          ),
         ),
+        title: _selectedIndex == 3
+            ? Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Colors.white,
+                    child: CircleAvatar(
+                      radius: 18,
+                      backgroundImage: const AssetImage('imagenes/logorental.png'),
+                    ),
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: const Text(
+                        'Mi Perfil',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 40), // Espacio para balancear el diseño
+                ],
+              )
+            : Text(
+                titles[_selectedIndex] ?? 'Página Principal - Proveedor',
+                style: const TextStyle(color: Colors.white),
+              ),
+      ),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: [
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Bienvenido, tu propósito es: $propositoUsuarioGlobal',
+                  style: const TextStyle(fontSize: 20),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+          const PublicadosProveedor(),
+          const Center(child: Text('Pantalla de Estadísticas', style: TextStyle(fontSize: 24))),
+          const PaginaPerfil(),
+        ],
+      ),
+      bottomNavigationBar: CustomNavBar(
+        selectedIndex: _selectedIndex,
+        onTap: _onItemTapped,
       ),
     );
   }
