@@ -1,9 +1,13 @@
+// archivo: pagina_principal_proveedor.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:rental/widgets/custom_widgets_proveedor.dart';
-import 'global.dart';
-import 'pagina_perfil.dart';
+import 'pagina_perfil_proveedor.dart';
 import 'publicados_proveedor.dart';
+
 
 class PaginaPrincipalProveedor extends StatefulWidget {
   const PaginaPrincipalProveedor({super.key});
@@ -14,6 +18,8 @@ class PaginaPrincipalProveedor extends StatefulWidget {
 
 class _PaginaPrincipalProveedorState extends State<PaginaPrincipalProveedor> {
   int _selectedIndex = 0;
+  String? userPurpose;
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -22,31 +28,74 @@ class _PaginaPrincipalProveedorState extends State<PaginaPrincipalProveedor> {
       statusBarColor: Color(0xFF5A1EFF),
       statusBarIconBrightness: Brightness.light,
     ));
+    fetchUserPurpose();
+  }
+
+  Future<void> fetchUserPurpose() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        setState(() => isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error: Debes iniciar sesión.')),
+        );
+        Navigator.pushReplacementNamed(context, '/login');
+        return;
+      }
+
+      final uid = user.uid;
+      final userDoc = await FirebaseFirestore.instance.collection('Usuarios').doc(uid).get();
+
+      if (!userDoc.exists) {
+        setState(() => isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Usuario no encontrado.')),
+        );
+        Navigator.pushReplacementNamed(context, '/login');
+        return;
+      }
+
+      final userData = userDoc.data() as Map<String, dynamic>;
+      final proposito = userData['proposito']?.toString().toLowerCase() ?? '';
+
+      if (proposito != 'proveedor') {
+        setState(() => isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Acceso denegado: No eres un proveedor.')),
+        );
+        Navigator.pushReplacementNamed(context, '/login');
+        return;
+      }
+
+      setState(() {
+        userPurpose = proposito;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() => isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al cargar datos: $e')),
+      );
+    }
   }
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-
-    if (index == 0) {
-      // Inicio (mantener la pantalla actual)
-    } else if (index == 1) {
-      // Publicados (ya se muestra en el IndexedStack)
-    } else if (index == 2) {
-      Navigator.pushNamed(context, '/estadisticas');
-    } else if (index == 3) {
-      // Perfil (ya se muestra en el IndexedStack)
-    }
+    setState(() => _selectedIndex = index);
   }
 
   @override
   Widget build(BuildContext context) {
-    // Títulos dinámicos para los índices que no son "Perfil"
+    if (isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     final Map<int, String> titles = {
       0: 'Página Principal - Proveedor',
       1: 'Mis Vehículos Publicados',
       2: 'Estadísticas',
+      3: 'Perfil'
     };
 
     return Scaffold(
@@ -69,27 +118,24 @@ class _PaginaPrincipalProveedorState extends State<PaginaPrincipalProveedor> {
                   CircleAvatar(
                     radius: 20,
                     backgroundColor: Colors.white,
-                    child: CircleAvatar(
+                    child: const CircleAvatar(
                       radius: 18,
-                      backgroundImage: const AssetImage('imagenes/logorental.png'),
+                      backgroundImage: AssetImage('images/logorental.png'),
                     ),
                   ),
-                  Expanded(
+                  const Expanded(
                     child: Center(
-                      child: const Text(
+                      child: Text(
                         'Mi Perfil',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                        ),
+                        style: TextStyle(color: Colors.white, fontSize: 20),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 40), // Espacio para balancear el diseño
+                  const SizedBox(width: 40),
                 ],
               )
             : Text(
-                titles[_selectedIndex] ?? 'Página Principal - Proveedor',
+                titles[_selectedIndex]!,
                 style: const TextStyle(color: Colors.white),
               ),
       ),
@@ -101,7 +147,7 @@ class _PaginaPrincipalProveedorState extends State<PaginaPrincipalProveedor> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Bienvenido, tu propósito es: $propositoUsuarioGlobal',
+                  'Bienvenido, tu propósito es: $userPurpose',
                   style: const TextStyle(fontSize: 20),
                   textAlign: TextAlign.center,
                 ),
@@ -110,7 +156,7 @@ class _PaginaPrincipalProveedorState extends State<PaginaPrincipalProveedor> {
           ),
           const PublicadosProveedor(),
           const Center(child: Text('Pantalla de Estadísticas', style: TextStyle(fontSize: 24))),
-          const PaginaPerfil(),
+          const PaginaPerfilProveedor(),
         ],
       ),
       bottomNavigationBar: CustomNavBar(

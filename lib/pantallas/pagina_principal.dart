@@ -18,14 +18,14 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
   void initState() {
     super.initState();
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: Color(0xFF5A1EFF),
+      statusBarColor: Colors.transparent, // Hacer la barra de estado transparente para que el gradiente la cubra
       statusBarIconBrightness: Brightness.light,
     ));
   }
 
   void _onItemTapped(int index) {
     if (index == 0) {
-      // Inicio
+      // Inicio (no hace nada porque ya está en la página principal)
     } else if (index == 1) {
       Navigator.pushNamed(context, '/mapa');
     } else if (index == 2) {
@@ -39,85 +39,92 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Parte superior con gradiente y solo el logo
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF5A1EFF), Color(0xFF9445F3)],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                ),
+      body: Column(
+        children: [
+          // Parte superior con gradiente extendido hasta la barra de estado
+          Container(
+            width: double.infinity,
+            height: MediaQuery.of(context).padding.top + 80, // Ajustar para incluir la barra de estado
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top, // Espacio para la barra de estado
+              left: 16,
+              right: 16,
+              bottom: 20,
+            ),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFF7b43cd), 
+                  Color(0xFF2575FC), 
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Container(
-                  width: 45,
-                  height: 45,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                  child: ClipOval(
-                    child: Image.asset(
-                      'imagenes/logorental.png',
-                      width: 40,
-                      height: 40,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Icon(Icons.person, size: 40, color: Colors.grey);
-                      },
-                    ),
+            ),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                width: 45,
+                height: 45,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: ClipOval(
+                  child: Image.asset(
+                    'imagenes/logorental.png',
+                    width: 40,
+                    height: 40,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(Icons.person, size: 40, color: Colors.grey);
+                    },
                   ),
                 ),
               ),
             ),
+          ),
 
-            // Contenido desplazable
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Categorías',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 10),
-                    GridView.count(
-                      crossAxisCount: 2,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      mainAxisSpacing: 10,
-                      crossAxisSpacing: 10,
-                      childAspectRatio: 1.2,
-                      children: [
-                        categoriaItem(context, 'imagenes/auto.png', 'Automóvil', true),
-                        categoriaItem(context, 'imagenes/minivan.png', 'Minivan', false),
-                        categoriaItem(context, 'imagenes/moto.png', 'Moto', false),
-                        categoriaItem(context, 'imagenes/electricos.png', 'Electricos', false),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Ofertas',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 10),
-                    ofertaItem('Chevrolet Kia', 'Dueño: Juan Sebastián', 'assets/carro1.png'),
-                    ofertaItem('Camioneta', 'Dueño: Ángel Santiago', 'assets/carro2.png'),
-                  ],
-                ),
+          // Contenido desplazable
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Categorías',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                  GridView.count(
+                    crossAxisCount: 2,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    mainAxisSpacing: 10,
+                    crossAxisSpacing: 10,
+                    childAspectRatio: 1.2,
+                    children: [
+                      categoriaItem(context, 'imagenes/auto.png', 'Automóvil', true),
+                      categoriaItem(context, 'imagenes/minivan.png', 'Minivan', false),
+                      categoriaItem(context, 'imagenes/moto.png', 'Moto', false),
+                      categoriaItem(context, 'imagenes/electricos.png', 'Electricos', false),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Ofertas',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                  ofertaItem('Chevrolet Kia', 'Dueño: Juan Sebastián', 'assets/carro1.png'),
+                  ofertaItem('Camioneta', 'Dueño: Ángel Santiago', 'assets/carro2.png'),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
       bottomNavigationBar: CustomNavBar(
         selectedIndex: _selectedIndex,

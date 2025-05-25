@@ -3,27 +3,27 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Importar Firebase Auth
 import 'package:flutter/services.dart'; // Importar para SystemChrome
 import 'login.dart'; // Pantalla de login
-import 'package:rental/widgets/custom_widgets.dart'; // Para CustomNavBar
 
-class PaginaPerfilCliente extends StatefulWidget {
+
+class PaginaPerfilProveedor extends StatefulWidget {
   final Map<String, dynamic>? preloadedUserData; // Datos precargados
-  final bool isCliente; // Estado precargado
+  final bool isProveedor; // Estado precargado
 
-  const PaginaPerfilCliente({
+  const PaginaPerfilProveedor({
     super.key,
     this.preloadedUserData,
-    this.isCliente = false,
+    this.isProveedor = false,
   });
 
   @override
-  State<PaginaPerfilCliente> createState() => _PaginaPerfilClienteState();
+  State<PaginaPerfilProveedor> createState() => _PaginaPerfilProveedorState();
 }
 
-class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
+class _PaginaPerfilProveedorState extends State<PaginaPerfilProveedor> {
   Map<String, dynamic>? userData;
   bool isLoading = true;
-  bool isCliente = false;
-  int _selectedIndex = 3; // Índice para la página de perfil
+  bool isProveedor = false;
+  // Índice para la página de perfil
 
   @override
   void initState() {
@@ -36,7 +36,7 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
       // Usar datos precargados si están disponibles
       setState(() {
         userData = widget.preloadedUserData;
-        isCliente = widget.isCliente;
+        isProveedor = widget.isProveedor;
         isLoading = false;
       });
     } else {
@@ -67,7 +67,7 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
       final uid = user.uid;
       print('UID del usuario autenticado: $uid'); // Depuración
 
-      // Verificar si el usuario es cliente consultando la colección Usuarios
+      // Verificar si el usuario es proveedor consultando la colección Usuarios
       final userDoc = await FirebaseFirestore.instance
           .collection('Usuarios')
           .doc(uid)
@@ -93,14 +93,14 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
       final proposito = userDataFromUsuarios['proposito']?.toString().toLowerCase() ?? '';
       print('Propósito del usuario: $proposito'); // Depuración
 
-      if (proposito == 'proveedor') {
-        print('El usuario no es cliente');
+      if (proposito != 'proveedor') {
+        print('El usuario no es proveedor');
         setState(() {
           isLoading = false;
-          isCliente = false;
+          isProveedor = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Acceso denegado: No eres un cliente.')),
+          const SnackBar(content: Text('Acceso denegado: No eres un proveedor.')),
         );
         Navigator.pushAndRemoveUntil(
           context,
@@ -110,9 +110,9 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
         return;
       }
 
-      // Si es cliente, cargar datos de la colección Usuarios
+      // Si es proveedor, cargar datos de la colección Usuarios
       setState(() {
-        isCliente = true;
+        isProveedor = true;
         userData = userDataFromUsuarios; // Usar datos de Usuarios directamente
         isLoading = false;
       });
@@ -160,6 +160,7 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
     String? correo = userData?['correo'];
     String? direccion = userData?['direccion'];
     String? fechaNacimiento = userData?['fechaNacimiento'];
+    String? proposito = userData?['proposito'];
 
     return showDialog<void>(
       context: context,
@@ -171,6 +172,7 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
         final TextEditingController correoController = TextEditingController(text: correo);
         final TextEditingController direccionController = TextEditingController(text: direccion);
         final TextEditingController fechaNacimientoController = TextEditingController(text: fechaNacimiento);
+        final TextEditingController propositoController = TextEditingController(text: proposito);
 
         return AlertDialog(
           title: const Text('Editar Datos'),
@@ -206,6 +208,11 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
                   controller: fechaNacimientoController,
                   decoration: const InputDecoration(labelText: 'Fecha Nacimiento'),
                 ),
+                TextFormField(
+                  controller: propositoController,
+                  decoration: const InputDecoration(labelText: 'Propósito'),
+                  enabled: false, // Propósito no editable
+                ),
               ],
             ),
           ),
@@ -240,6 +247,7 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
                     'correo': correoController.text,
                     'direccion': direccionController.text,
                     'fechaNacimiento': fechaNacimientoController.text,
+                    'proposito': propositoController.text,
                   }, SetOptions(merge: true));
 
                   // Actualizar el estado local
@@ -251,6 +259,7 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
                     userData?['correo'] = correoController.text;
                     userData?['direccion'] = direccionController.text;
                     userData?['fechaNacimiento'] = fechaNacimientoController.text;
+                    userData?['proposito'] = propositoController.text;
                   });
 
                   // Depuración: Verificar que userData se actualizó
@@ -276,236 +285,137 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
     );
   }
 
-  void _onItemTapped(int index) {
-    if (index == 0) {
-      Navigator.pushNamedAndRemoveUntil(context, '/inicio', (Route<dynamic> route) => false); // Navegar a Inicio y limpiar la pila
-    } else if (index == 1) {
-      Navigator.pushNamed(context, '/mapa');
-    } else if (index == 2) {
-      Navigator.pushNamed(context, '/favoritos');
-    } else if (index == 3) {
-      Navigator.pushNamed(context, '/perfil');
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-      return Scaffold(
-        appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(60),
-          child: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              title: Row(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(right: 10),
-                    child: CircleAvatar(
-                      radius: 20,
-                      backgroundColor: Colors.white,
-                      child: Image.asset(
-                        'imagenes/logorental.png', // Asegúrate de tener esta imagen
-                        height: 36,
-                      ),
-                    ),
-                  ),
-                  const Text(
-                    'Perfil',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ],
-              ),
-              automaticallyImplyLeading: false,
-            ),
-          ),
-        ),
-        body: const Center(child: CircularProgressIndicator()),
-        bottomNavigationBar: CustomNavBar(
-          selectedIndex: _selectedIndex,
-          onTap: _onItemTapped,
-        ),
-      );
-    }
-
-    if (!isCliente) {
-      return const Center(child: Text('Acceso denegado.'));
-    }
-
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(60),
-        child: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                  Color(0xFF7b43cd), 
-                  Color(0xFF2575FC), 
-                ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-          child: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            title: Row(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 10),
-                  child: CircleAvatar(
-                    radius: 20,
-                    backgroundColor: Colors.white,
-                    child: Image.asset(
-                      'imagenes/logorental.png', // Asegúrate de tener esta imagen
-                      height: 36,
-                    ),
-                  ),
-                ),
-                const Text(
-                  'Perfil',
-                  style: TextStyle(color: Colors.white),
-                ),
-              ],
-            ),
-            automaticallyImplyLeading: false,
-          ),
-        ),
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Stack(
-              children: [
-                Container(
-                  height: 200,
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Color(0xFF4B4EAB), Color(0xFF8B5CF6)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 120,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Colors.white,
-                      child: CircleAvatar(
-                        radius: 47,
-                        child: Icon(
-                          Icons.person,
-                          size: 50,
-                          color: Colors.grey[700],
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : !isProveedor
+              ? const Center(child: Text('Acceso denegado.'))
+              : SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      Stack(
+                        children: [
+                          Container(
+                            height: 200,
+                            decoration: const BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [Color(0xFF4B4EAB), Color(0xFF8B5CF6)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            top: 120,
+                            left: 0,
+                            right: 0,
+                            child: Center(
+                              child: CircleAvatar(
+                                radius: 50,
+                                backgroundColor: Colors.white,
+                                child: CircleAvatar(
+                                  radius: 47,
+                                  child: Icon(
+                                    Icons.person,
+                                    size: 50,
+                                    color: Colors.grey[700],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 60),
+                      Text(
+                        userData?['nombre'] ?? '',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
                         ),
                       ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 60),
-            Text(
-              userData?['nombre'] ?? '',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-              ),
-            ),
-            const SizedBox(height: 10),
-            sectionTitle("Información Personal"),
-            infoItem("Nombre", userData?['nombre']),
-            infoItem("Correo", userData?['correo']),
-            infoItem("Teléfono", userData?['telefono']),
-            infoItem("Fecha Nac", userData?['fechaNacimiento']),
-            infoItem("Dirección", userData?['direccion']),
-            infoItem("Barrio", userData?['barrio']),
-            infoItem("Ciudad", userData?['ciudad']),
-            const SizedBox(height: 15),
-            Center(
-              child: SizedBox(
-                width: 200, // Ancho más alargado
-                child: ElevatedButton(
-                  onPressed: () {
-                    _mostrarDialogoEditarDatos(context); // Llamar al diálogo de edición
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    padding: const EdgeInsets.all(0), // Ajustar padding para el gradiente
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: Ink(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Color(0xFF7b43cd), Color(0xFF2575FC)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.all(Radius.circular(10)),
-                    ),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Ajuste de padding
-                      alignment: Alignment.center,
-                      child: const Text(
-                        "Editar datos",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
+                      const SizedBox(height: 10),
+                      sectionTitle("Información Personal"),
+                      infoItem("Nombre", userData?['nombre']),
+                      infoItem("Correo", userData?['correo']),
+                      infoItem("Teléfono", userData?['telefono']),
+                      infoItem("Fecha Nac", userData?['fechaNacimiento']),
+                      infoItem("Dirección", userData?['direccion']),
+                      infoItem("Barrio", userData?['barrio']),
+                      infoItem("Ciudad", userData?['ciudad']),
+                      infoItem("Propósito", userData?['proposito']),
+                      const SizedBox(height: 15),
+                      Center(
+                        child: SizedBox(
+                          width: 200, // Ancho más alargado
+                          child: ElevatedButton(
+                            onPressed: () {
+                              _mostrarDialogoEditarDatos(context); // Llamar al diálogo de edición
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              padding: const EdgeInsets.all(0), // Ajustar padding para el gradiente
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: Ink(
+                              decoration: const BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [Color(0xFF7b43cd), Color(0xFF2575FC)],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.all(Radius.circular(10)),
+                              ),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Ajuste de padding
+                                alignment: Alignment.center,
+                                child: const Text(
+                                  "Editar datos",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                      const SizedBox(height: 30),
+                      listTileItem(Icons.history, "Historial"),
+                      listTileItem(Icons.description, "Términos y condiciones"),
+                      // Botón de cerrar sesión con texto negro
+                      ListTile(
+                        leading: const Icon(
+                          Icons.logout,
+                          color: Color(0xFF4B4EAB),
+                        ),
+                        title: const Text(
+                          "Cerrar sesión",
+                          style: TextStyle(color: Colors.black),
+                        ),
+                        trailing: const Icon(Icons.keyboard_arrow_right),
+                        onTap: () {
+                          FirebaseAuth.instance.signOut();
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const LoginPage(),
+                            ),
+                            (Route<dynamic> route) => false,
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 30),
+                    ],
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 30),
-            listTileItem(Icons.history, "Historial"),
-            listTileItem(Icons.description, "Términos y condiciones"),
-            // Botón de cerrar sesión con texto negro
-            ListTile(
-              leading: const Icon(
-                Icons.logout,
-                color: Color(0xFF4B4EAB),
-              ),
-              title: const Text(
-                "Cerrar sesión",
-                style: TextStyle(color: Colors.black),
-              ),
-              trailing: const Icon(Icons.keyboard_arrow_right),
-              onTap: () {
-                FirebaseAuth.instance.signOut();
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const LoginPage(),
-                  ),
-                  (Route<dynamic> route) => false,
-                );
-              },
-            ),
-            const SizedBox(height: 30),
-          ],
-        ),
-      ),
-      bottomNavigationBar: CustomNavBar(
-        selectedIndex: _selectedIndex,
-        onTap: _onItemTapped,
-      ),
     );
   }
 

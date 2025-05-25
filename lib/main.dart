@@ -9,6 +9,8 @@ import 'pantallas/pagina_perfil.dart';
 import 'pantallas/pagina_favoritos.dart';
 import 'pantallas/pagina_automoviles.dart';
 import 'pantallas/mapa_automovil.dart';
+import 'pantallas/pagina_principal_provee.dart';
+
 
 
 // Importación de Mapbox
@@ -43,9 +45,11 @@ class MyApp extends StatelessWidget {
         '/inicio': (context) => const PaginaPrincipal(),
         '/mapa': (context) => const PaginaMapa(),
         '/favoritos': (context) => const PaginaFavoritos(),
-        '/perfil': (context) => const PaginaPerfil(),
+        '/perfil': (context) => const PaginaPerfilCliente(),
         '/vehiculos': (context) => const PaginaVehiculos(),
         '/mapa_automovil': (context) => const MapaAutomovil(),
+        '/proveedor': (context) => const PaginaPrincipalProveedor(),
+
       },
     );
   }

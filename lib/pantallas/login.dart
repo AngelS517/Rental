@@ -4,16 +4,28 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'pagina_principal.dart';
 import 'pagina_principal_provee.dart';
 import 'pagina_registro.dart';
-import 'global.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final TextEditingController emailController = TextEditingController();
-    final TextEditingController passwordController = TextEditingController();
+  State<LoginPage> createState() => _LoginPageState();
+}
 
+class _LoginPageState extends State<LoginPage> {
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  bool _obscureText = true; // Estado para mostrar/ocultar contraseña
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
@@ -66,12 +78,14 @@ class LoginPage extends StatelessWidget {
                         borderRadius: BorderRadius.circular(15),
                         borderSide: BorderSide.none,
                       ),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20), // Espacio consistente
+                      floatingLabelBehavior: FloatingLabelBehavior.auto, // Animación natural
                     ),
                   ),
                   const SizedBox(height: 15),
                   TextField(
                     controller: passwordController,
-                    obscureText: true,
+                    obscureText: _obscureText, // Controlar si se muestra u oculta
                     style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(
                       labelText: 'Contraseña:',
@@ -83,6 +97,19 @@ class LoginPage extends StatelessWidget {
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
                         borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20), // Espacio consistente, ajustado para el icono
+                      floatingLabelBehavior: FloatingLabelBehavior.auto, // Animación natural
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscureText ? Icons.visibility_off : Icons.visibility, // Mantenido como está
+                          color: Colors.white70,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscureText = !_obscureText; // Alternar entre mostrar y ocultar
+                          });
+                        },
                       ),
                     ),
                   ),
@@ -108,8 +135,7 @@ class LoginPage extends StatelessWidget {
                           ),
                         ),
                         onPressed: () async {
-                          String email =
-                              emailController.text.trim().toLowerCase();
+                          String email = emailController.text.trim().toLowerCase();
                           String password = passwordController.text.trim();
 
                           if (email.isEmpty || password.isEmpty) {
@@ -138,40 +164,32 @@ class LoginPage extends StatelessWidget {
                               'Usuario autenticado con UID: ${userCredential.user!.uid}',
                             );
 
-                            DocumentSnapshot doc =
-                                await FirebaseFirestore.instance
-                                    .collection('Usuarios')
-                                    .doc(userCredential.user!.uid)
-                                    .get();
+                            DocumentSnapshot doc = await FirebaseFirestore.instance
+                                .collection('Usuarios')
+                                .doc(userCredential.user!.uid)
+                                .get();
 
                             if (doc.exists) {
                               print(
                                 'Usuario encontrado en Firestore: ${doc.data()}',
                               );
-                              correoUsuarioGlobal = email;
 
-                              // Guardar el propósito en variable global
-                              Map<String, dynamic> datos =
-                                  doc.data() as Map<String, dynamic>;
-                              propositoUsuarioGlobal = datos['proposito'] ?? '';
+                              Map<String, dynamic> datos = doc.data() as Map<String, dynamic>;
+                              String proposito = datos['proposito']?.toLowerCase() ?? '';
 
                               // Redirigir según el propósito
-                              if (propositoUsuarioGlobal.toLowerCase() ==
-                                  'proveedor') {
+                              if (proposito == 'proveedor') {
                                 Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
-                                    builder:
-                                        (context) =>
-                                            const PaginaPrincipalProveedor(),
+                                    builder: (context) => const PaginaPrincipalProveedor(),
                                   ),
                                 );
                               } else {
                                 Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
-                                    builder:
-                                        (context) => const PaginaPrincipal(),
+                                    builder: (context) => const PaginaPrincipal(),
                                   ),
                                 );
                               }
@@ -191,9 +209,7 @@ class LoginPage extends StatelessWidget {
                             if (e.toString().contains('invalid-credential') ||
                                 e.toString().contains('user-not-found')) {
                               errorMessage = 'Correo no registrado';
-                            } else if (e.toString().contains(
-                              'wrong-password',
-                            )) {
+                            } else if (e.toString().contains('wrong-password')) {
                               errorMessage = 'Contraseña incorrecta';
                             }
                             ScaffoldMessenger.of(context).showSnackBar(
