@@ -47,7 +47,7 @@ class _PaginaMotosState extends State<PaginaMotos> {
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('Vehiculos')
-            .where('Categoria', isEqualTo: 'Motocicletas')
+            .where('categoria', isEqualTo: 'Moto')
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
