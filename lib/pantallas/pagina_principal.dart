@@ -156,7 +156,7 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
                     stream:
                         FirebaseFirestore.instance
                             .collection('Vehiculos')
-                            .where('precioPorDia', isLessThan: 20000)
+                            .where('precioPorDia', isLessThan: 26000)
                             .snapshots(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
