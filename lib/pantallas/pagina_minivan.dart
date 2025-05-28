@@ -3,14 +3,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:rental/widgets/custom_widgets.dart';
 import 'pagina_descripcion_vehiculo.dart';
 
-class PaginaMotos extends StatefulWidget {
-  const PaginaMotos({super.key});
+class PaginaMinivan extends StatefulWidget {
+  const PaginaMinivan({super.key});
 
   @override
-  State<PaginaMotos> createState() => _PaginaMotoState();
+  State<PaginaMinivan> createState() => _PaginaMinivanState();
 }
 
-class _PaginaMotoState extends State<PaginaMotos> {
+class _PaginaMinivanState extends State<PaginaMinivan> {
   int _selectedIndex = 0;
   String _sortOrder = 'default';
 
@@ -36,7 +36,7 @@ class _PaginaMotoState extends State<PaginaMotos> {
   Widget build(BuildContext context) {
     Query<Map<String, dynamic>> query = FirebaseFirestore.instance
         .collection('Vehiculos')
-        .where('categoria', isEqualTo: 'Moto');
+        .where('categoria', isEqualTo: 'Minivan');
 
     return Scaffold(
       appBar: PreferredSize(
@@ -67,7 +67,7 @@ class _PaginaMotoState extends State<PaginaMotos> {
                   child: Image.asset('imagenes/logorental.png', height: 40),
                 ),
                 const Text(
-                  'Lista de Motos',
+                  'Lista de Minivans',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 20,
@@ -115,7 +115,9 @@ class _PaginaMotoState extends State<PaginaMotos> {
                 }
 
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(child: Text('No hay motos disponibles.'));
+                  return const Center(
+                    child: Text('No hay minivans disponibles.'),
+                  );
                 }
 
                 List<QueryDocumentSnapshot> vehiculos =
@@ -127,7 +129,7 @@ class _PaginaMotoState extends State<PaginaMotos> {
 
                 if (vehiculos.isEmpty) {
                   return const Center(
-                    child: Text('No hay motos con precios válidos.'),
+                    child: Text('No hay minivans con precios válidos.'),
                   );
                 }
 

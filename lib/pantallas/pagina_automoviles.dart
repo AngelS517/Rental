@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:rental/widgets/custom_widgets.dart';
+import 'pagina_descripcion_vehiculo.dart';
 
 class PaginaVehiculos extends StatefulWidget {
   const PaginaVehiculos({super.key});
@@ -11,17 +12,22 @@ class PaginaVehiculos extends StatefulWidget {
 
 class _PaginaVehiculosState extends State<PaginaVehiculos> {
   int _selectedIndex = 0;
-  String _sortOrder = 'default'; // 'default', 'asc', 'desc'
+  String _sortOrder = 'default';
 
   void _onItemTapped(int index) {
-    if (index == 0) {
-      Navigator.pushNamed(context, '/inicio');
-    } else if (index == 1) {
-      Navigator.pushNamed(context, '/mapa');
-    } else if (index == 2) {
-      Navigator.pushNamed(context, '/favoritos');
-    } else if (index == 3) {
-      Navigator.pushNamed(context, '/perfil');
+    switch (index) {
+      case 0:
+        Navigator.pushNamed(context, '/inicio');
+        break;
+      case 1:
+        Navigator.pushNamed(context, '/mapa');
+        break;
+      case 2:
+        Navigator.pushNamed(context, '/favoritos');
+        break;
+      case 3:
+        Navigator.pushNamed(context, '/perfil');
+        break;
     }
   }
 
@@ -33,7 +39,6 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
 
   @override
   Widget build(BuildContext context) {
-    // Consulta base sin orderBy para evitar el índice compuesto
     Query<Map<String, dynamic>> query = FirebaseFirestore.instance
         .collection('Vehiculos')
         .where('categoria', isEqualTo: 'Automovil');
@@ -64,10 +69,7 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                     color: Colors.white,
                   ),
                   padding: const EdgeInsets.all(8),
-                  child: Image.asset(
-                    'imagenes/logorental.png',
-                    height: 40,
-                  ),
+                  child: Image.asset('imagenes/logorental.png', height: 40),
                 ),
                 const Text(
                   'Lista de Automóviles',
@@ -89,21 +91,19 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
             child: Align(
               alignment: Alignment.centerRight,
               child: PopupMenuButton<String>(
-                icon: Image.asset(
-                  'imagenes/categoria.png',
-                  height: 32,
-                ),
+                icon: Image.asset('imagenes/categoria.png', height: 32),
                 onSelected: _onSortSelected,
-                itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                  const PopupMenuItem<String>(
-                    value: 'asc',
-                    child: Text('Más barato a caro'),
-                  ),
-                  const PopupMenuItem<String>(
-                    value: 'desc',
-                    child: Text('Más caro a barato'),
-                  ),
-                ],
+                itemBuilder:
+                    (BuildContext context) => <PopupMenuEntry<String>>[
+                      const PopupMenuItem<String>(
+                        value: 'asc',
+                        child: Text('Más barato a caro'),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'desc',
+                        child: Text('Más caro a barato'),
+                      ),
+                    ],
               ),
             ),
           ),
@@ -120,20 +120,26 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                 }
 
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(child: Text('No hay automóviles disponibles.'));
+                  return const Center(
+                    child: Text('No hay automóviles disponibles.'),
+                  );
                 }
 
-                // Filtrar documentos válidos (asegurarse de que precioPorDia exista y sea numérico)
-                List<QueryDocumentSnapshot> vehiculos = snapshot.data!.docs.where((doc) {
-                  final data = doc.data() as Map<String, dynamic>;
-                  return data.containsKey('precioPorDia') && (data['precioPorDia'] is num);
-                }).toList();
+                List<QueryDocumentSnapshot> vehiculos =
+                    snapshot.data!.docs.where((doc) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      return data.containsKey('precioPorDia') &&
+                          data['precioPorDia'] is num &&
+                          data.containsKey('placa') &&
+                          data['placa'] is String;
+                    }).toList();
 
                 if (vehiculos.isEmpty) {
-                  return const Center(child: Text('No hay automóviles con precios válidos.'));
+                  return const Center(
+                    child: Text('No hay automóviles válidos disponibles.'),
+                  );
                 }
 
-                // Ordenar los vehículos en el cliente según el precioPorDia
                 if (_sortOrder != 'default') {
                   vehiculos.sort((a, b) {
                     final dataA = a.data() as Map<String, dynamic>;
@@ -141,8 +147,8 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                     final precioA = dataA['precioPorDia'].toDouble();
                     final precioB = dataB['precioPorDia'].toDouble();
                     return _sortOrder == 'asc'
-                        ? precioA.compareTo(precioB) // Menor a mayor
-                        : precioB.compareTo(precioA); // Mayor a menor
+                        ? precioA.compareTo(precioB)
+                        : precioB.compareTo(precioA);
                   });
                 }
 
@@ -150,22 +156,29 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                   padding: const EdgeInsets.all(16),
                   itemCount: vehiculos.length,
                   itemBuilder: (context, index) {
-                    final data = vehiculos[index].data() as Map<String, dynamic>;
-                    final calificacion = data['calificacion'] is double
-                        ? data['calificacion'] as double
-                        : (data['calificacion'] as num?)?.toDouble() ?? 0.0;
+                    final data =
+                        vehiculos[index].data() as Map<String, dynamic>;
+                    final calificacion =
+                        data['calificacion'] is double
+                            ? data['calificacion'] as double
+                            : (data['calificacion'] as num?)?.toDouble() ?? 0.0;
+                    final placa = data['placa'] as String;
+
                     return vehiculoItem(
                       data['marca']?.toString() ?? 'Sin marca',
                       data['modelo']?.toString() ?? '',
                       data['precioPorDia']?.toDouble() ?? 0.0,
                       data['Propietario']?.toString() ?? 'Desconocido',
                       data['imagen']?.toString() ?? '',
-                      data['direccion']?.toString() ?? 'Dirección no disponible',
-                      data['ciudad']?.toString() ?? 'Ciudad no disponible',
-                      data['detalles']?['tipoCombustible']?.toString() ?? 'No especificado',
+                      data['direccion']?.toString() ?? 'No disponible',
+                      data['ciudad']?.toString() ?? 'Ciudad desconocida',
+                      data['detalles']?['tipoCombustible']?.toString() ??
+                          'No especificado',
                       data['detalles']?['#pasajeros']?.toString() ?? 'N/A',
-                      data['detalles']?['kilometraje']?.toString() ?? 'No especificado',
+                      data['detalles']?['kilometraje']?.toString() ??
+                          'No especificado',
                       calificacion,
+                      placa,
                     );
                   },
                 );
@@ -193,13 +206,12 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
     String numPasajeros,
     String kilometraje,
     double calificacion,
+    String placa,
   ) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -208,7 +220,6 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Imagen del vehículo
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: Image.network(
@@ -231,56 +242,60 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                // Detalles del vehículo
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Título (Marca y Modelo)
                       Text(
                         modelo.isNotEmpty ? '$marca $modelo' : marca,
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
-                      // Propietario
                       Text(
                         'Propietario: $propietario',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
-                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       ),
                       const SizedBox(height: 4),
-                      // Ciudad
                       Row(
                         children: [
-                          Icon(Icons.location_city, size: 16, color: Colors.grey[700]),
+                          Icon(
+                            Icons.location_city,
+                            size: 16,
+                            color: Colors.grey[700],
+                          ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               ciudad,
-                              style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[700],
+                              ),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 4),
-                      // Tipo de Combustible y Pasajeros
                       Row(
                         children: [
-                          Icon(Icons.local_gas_station, size: 16, color: Colors.grey[700]),
+                          Icon(
+                            Icons.local_gas_station,
+                            size: 16,
+                            color: Colors.grey[700],
+                          ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               tipoCombustible,
-                              style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[700],
+                              ),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -290,14 +305,16 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                           Expanded(
                             child: Text(
                               '$numPasajeros pasajeros',
-                              style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[700],
+                              ),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 4),
-                      // Kilometraje
                       Row(
                         children: [
                           Icon(Icons.speed, size: 16, color: Colors.grey[700]),
@@ -305,7 +322,10 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                           Expanded(
                             child: Text(
                               kilometraje,
-                              style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[700],
+                              ),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -317,7 +337,6 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
               ],
             ),
             const SizedBox(height: 8),
-            // Precio y Calificación
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -338,18 +357,29 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                 Row(
                   children: List.generate(5, (index) {
                     if (index < calificacion.floor()) {
-                      return const Icon(Icons.star, color: Colors.amber, size: 16);
-                    } else if (index < calificacion && index >= calificacion.floor()) {
-                      return const Icon(Icons.star_half, color: Colors.amber, size: 16);
+                      return const Icon(
+                        Icons.star,
+                        color: Colors.amber,
+                        size: 16,
+                      );
+                    } else if (index < calificacion) {
+                      return const Icon(
+                        Icons.star_half,
+                        color: Colors.amber,
+                        size: 16,
+                      );
                     } else {
-                      return const Icon(Icons.star_border, color: Colors.grey, size: 16);
+                      return const Icon(
+                        Icons.star_border,
+                        color: Colors.grey,
+                        size: 16,
+                      );
                     }
                   }),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            // Botones
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -373,23 +403,28 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
                 ),
                 const SizedBox(width: 8),
-                ElevatedButton(
+                TextButton(
                   onPressed: () {
-                    // TODO: Implementar navegación o lógica para ver detalles
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) =>
+                                PaginaDescripcionVehiculo(placa: placa),
+                      ),
+                    );
                   },
-                  child: const Text('Ver Detalles'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey[600],
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.green[700],
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
+                  child: const Text('Ver Más'),
                 ),
               ],
             ),

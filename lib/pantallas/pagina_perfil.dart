@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart'; // Importar Firebase Auth
 import 'package:flutter/services.dart'; // Importar para SystemChrome
 import 'login.dart'; // Pantalla de login
 import 'package:rental/widgets/custom_widgets.dart'; // Para CustomNavBar
+import 'pagina_terminos.dart';
 
 class PaginaPerfilCliente extends StatefulWidget {
   final Map<String, dynamic>? preloadedUserData; // Datos precargados
@@ -28,10 +29,12 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
   @override
   void initState() {
     super.initState();
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: Color(0xFF5A1EFF),
-      statusBarIconBrightness: Brightness.light,
-    ));
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Color(0xFF5A1EFF),
+        statusBarIconBrightness: Brightness.light,
+      ),
+    );
     if (widget.preloadedUserData != null) {
       // Usar datos precargados si están disponibles
       setState(() {
@@ -68,19 +71,20 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
       print('UID del usuario autenticado: $uid'); // Depuración
 
       // Verificar si el usuario es cliente consultando la colección Usuarios
-      final userDoc = await FirebaseFirestore.instance
-          .collection('Usuarios')
-          .doc(uid)
-          .get();
+      final userDoc =
+          await FirebaseFirestore.instance
+              .collection('Usuarios')
+              .doc(uid)
+              .get();
 
       if (!userDoc.exists) {
         print('Usuario no encontrado en la colección Usuarios');
         setState(() {
           isLoading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Usuario no encontrado.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Usuario no encontrado.')));
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const LoginPage()),
@@ -90,7 +94,8 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
       }
 
       final userDataFromUsuarios = userDoc.data() as Map<String, dynamic>;
-      final proposito = userDataFromUsuarios['proposito']?.toString().toLowerCase() ?? '';
+      final proposito =
+          userDataFromUsuarios['proposito']?.toString().toLowerCase() ?? '';
       print('Propósito del usuario: $proposito'); // Depuración
 
       if (proposito == 'proveedor') {
@@ -116,16 +121,18 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
         userData = userDataFromUsuarios; // Usar datos de Usuarios directamente
         isLoading = false;
       });
-      print('Datos del usuario cargados desde Usuarios: $userData'); // Depuración
+      print(
+        'Datos del usuario cargados desde Usuarios: $userData',
+      ); // Depuración
     } catch (e) {
       print('Error al obtener datos: $e');
       setState(() {
         userData = {};
         isLoading = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al cargar datos: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error al cargar datos: $e')));
     }
   }
 
@@ -135,16 +142,19 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) return;
 
-      final userDoc = await FirebaseFirestore.instance
-          .collection('Usuarios')
-          .doc(user.uid)
-          .get();
+      final userDoc =
+          await FirebaseFirestore.instance
+              .collection('Usuarios')
+              .doc(user.uid)
+              .get();
 
       if (userDoc.exists) {
         setState(() {
           userData = userDoc.data();
         });
-        print('Datos recargados desde Firestore (Usuarios): $userData'); // Depuración
+        print(
+          'Datos recargados desde Firestore (Usuarios): $userData',
+        ); // Depuración
       }
     } catch (e) {
       print('Error al recargar datos desde Firestore: $e');
@@ -164,13 +174,26 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
     return showDialog<void>(
       context: context,
       builder: (BuildContext context) {
-        final TextEditingController nombreController = TextEditingController(text: nombre);
-        final TextEditingController telefonoController = TextEditingController(text: telefono);
-        final TextEditingController barrioController = TextEditingController(text: barrio);
-        final TextEditingController ciudadController = TextEditingController(text: ciudad);
-        final TextEditingController correoController = TextEditingController(text: correo);
-        final TextEditingController direccionController = TextEditingController(text: direccion);
-        final TextEditingController fechaNacimientoController = TextEditingController(text: fechaNacimiento);
+        final TextEditingController nombreController = TextEditingController(
+          text: nombre,
+        );
+        final TextEditingController telefonoController = TextEditingController(
+          text: telefono,
+        );
+        final TextEditingController barrioController = TextEditingController(
+          text: barrio,
+        );
+        final TextEditingController ciudadController = TextEditingController(
+          text: ciudad,
+        );
+        final TextEditingController correoController = TextEditingController(
+          text: correo,
+        );
+        final TextEditingController direccionController = TextEditingController(
+          text: direccion,
+        );
+        final TextEditingController fechaNacimientoController =
+            TextEditingController(text: fechaNacimiento);
 
         return AlertDialog(
           title: const Text('Editar Datos'),
@@ -204,7 +227,9 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
                 ),
                 TextFormField(
                   controller: fechaNacimientoController,
-                  decoration: const InputDecoration(labelText: 'Fecha Nacimiento'),
+                  decoration: const InputDecoration(
+                    labelText: 'Fecha Nacimiento',
+                  ),
                 ),
               ],
             ),
@@ -223,7 +248,9 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
                   final user = FirebaseAuth.instance.currentUser;
                   if (user == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Error: Debes iniciar sesión.')),
+                      const SnackBar(
+                        content: Text('Error: Debes iniciar sesión.'),
+                      ),
                     );
                     return;
                   }
@@ -233,14 +260,14 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
                       .collection('Usuarios')
                       .doc(user.uid)
                       .set({
-                    'nombre': nombreController.text,
-                    'telefono': telefonoController.text,
-                    'barrio': barrioController.text,
-                    'ciudad': ciudadController.text,
-                    'correo': correoController.text,
-                    'direccion': direccionController.text,
-                    'fechaNacimiento': fechaNacimientoController.text,
-                  }, SetOptions(merge: true));
+                        'nombre': nombreController.text,
+                        'telefono': telefonoController.text,
+                        'barrio': barrioController.text,
+                        'ciudad': ciudadController.text,
+                        'correo': correoController.text,
+                        'direccion': direccionController.text,
+                        'fechaNacimiento': fechaNacimientoController.text,
+                      }, SetOptions(merge: true));
 
                   // Actualizar el estado local
                   setState(() {
@@ -250,7 +277,8 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
                     userData?['ciudad'] = ciudadController.text;
                     userData?['correo'] = correoController.text;
                     userData?['direccion'] = direccionController.text;
-                    userData?['fechaNacimiento'] = fechaNacimientoController.text;
+                    userData?['fechaNacimiento'] =
+                        fechaNacimientoController.text;
                   });
 
                   // Depuración: Verificar que userData se actualizó
@@ -260,7 +288,9 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
                   await _recargarDatosDesdeFirestore();
 
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Datos actualizados correctamente')),
+                    const SnackBar(
+                      content: Text('Datos actualizados correctamente'),
+                    ),
                   );
                   Navigator.of(context).pop();
                 } catch (e) {
@@ -278,7 +308,11 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
 
   void _onItemTapped(int index) {
     if (index == 0) {
-      Navigator.pushNamedAndRemoveUntil(context, '/inicio', (Route<dynamic> route) => false); // Navegar a Inicio y limpiar la pila
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/inicio',
+        (Route<dynamic> route) => false,
+      ); // Navegar a Inicio y limpiar la pila
     } else if (index == 1) {
       Navigator.pushNamed(context, '/mapa');
     } else if (index == 2) {
@@ -318,10 +352,7 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
                       ),
                     ),
                   ),
-                  const Text(
-                    'Perfil',
-                    style: TextStyle(color: Colors.white),
-                  ),
+                  const Text('Perfil', style: TextStyle(color: Colors.white)),
                 ],
               ),
               automaticallyImplyLeading: false,
@@ -346,10 +377,7 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
         child: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                  Color(0xFF7b43cd), 
-                  Color(0xFF2575FC), 
-                ],
+              colors: [Color(0xFF7b43cd), Color(0xFF2575FC)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -370,10 +398,7 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
                     ),
                   ),
                 ),
-                const Text(
-                  'Perfil',
-                  style: TextStyle(color: Colors.white),
-                ),
+                const Text('Perfil', style: TextStyle(color: Colors.white)),
               ],
             ),
             automaticallyImplyLeading: false,
@@ -419,10 +444,7 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
             const SizedBox(height: 60),
             Text(
               userData?['nombre'] ?? '',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
             ),
             const SizedBox(height: 10),
             sectionTitle("Información Personal"),
@@ -439,11 +461,15 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
                 width: 200, // Ancho más alargado
                 child: ElevatedButton(
                   onPressed: () {
-                    _mostrarDialogoEditarDatos(context); // Llamar al diálogo de edición
+                    _mostrarDialogoEditarDatos(
+                      context,
+                    ); // Llamar al diálogo de edición
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.transparent,
-                    padding: const EdgeInsets.all(0), // Ajustar padding para el gradiente
+                    padding: const EdgeInsets.all(
+                      0,
+                    ), // Ajustar padding para el gradiente
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -458,7 +484,10 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
                       borderRadius: BorderRadius.all(Radius.circular(10)),
                     ),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Ajuste de padding
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 12,
+                        horizontal: 20,
+                      ), // Ajuste de padding
                       alignment: Alignment.center,
                       child: const Text(
                         "Editar datos",
@@ -475,13 +504,21 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
             ),
             const SizedBox(height: 30),
             listTileItem(Icons.history, "Historial"),
-            listTileItem(Icons.description, "Términos y condiciones"),
+            ListTile(
+              leading: const Icon(Icons.description, color: Color(0xFF4B4EAB)),
+              title: const Text("Términos y condiciones"),
+              trailing: const Icon(Icons.keyboard_arrow_right),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => PaginaTerminos()),
+                );
+              },
+            ),
+
             // Botón de cerrar sesión con texto negro
             ListTile(
-              leading: const Icon(
-                Icons.logout,
-                color: Color(0xFF4B4EAB),
-              ),
+              leading: const Icon(Icons.logout, color: Color(0xFF4B4EAB)),
               title: const Text(
                 "Cerrar sesión",
                 style: TextStyle(color: Colors.black),
@@ -491,9 +528,7 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
                 FirebaseAuth.instance.signOut();
                 Navigator.pushAndRemoveUntil(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => const LoginPage(),
-                  ),
+                  MaterialPageRoute(builder: (context) => const LoginPage()),
                   (Route<dynamic> route) => false,
                 );
               },

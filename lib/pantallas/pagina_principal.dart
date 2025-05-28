@@ -3,6 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:rental/widgets/custom_widgets.dart';
 import 'pagina_automoviles.dart';
 import 'pagina_motos.dart';
+import 'pagina_minivan.dart';
+import 'pagina_electrico.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PaginaPrincipal extends StatefulWidget {
   const PaginaPrincipal({super.key});
@@ -17,10 +20,14 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
   @override
   void initState() {
     super.initState();
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent, // Hacer la barra de estado transparente para que el gradiente la cubra
-      statusBarIconBrightness: Brightness.light,
-    ));
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor:
+            Colors
+                .transparent, // Hacer la barra de estado transparente para que el gradiente la cubra
+        statusBarIconBrightness: Brightness.light,
+      ),
+    );
   }
 
   void _onItemTapped(int index) {
@@ -44,19 +51,21 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
           // Parte superior con gradiente extendido hasta la barra de estado
           Container(
             width: double.infinity,
-            height: MediaQuery.of(context).padding.top + 80, // Ajustar para incluir la barra de estado
+            height:
+                MediaQuery.of(context).padding.top +
+                80, // Ajustar para incluir la barra de estado
             padding: EdgeInsets.only(
-              top: MediaQuery.of(context).padding.top, // Espacio para la barra de estado
+              top:
+                  MediaQuery.of(
+                    context,
+                  ).padding.top, // Espacio para la barra de estado
               left: 16,
               right: 16,
               bottom: 20,
             ),
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  Color(0xFF7b43cd), 
-                  Color(0xFF2575FC), 
-                ],
+                colors: [Color(0xFF7b43cd), Color(0xFF2575FC)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -77,7 +86,11 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
                     height: 40,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
-                      return const Icon(Icons.person, size: 40, color: Colors.grey);
+                      return const Icon(
+                        Icons.person,
+                        size: 40,
+                        color: Colors.grey,
+                      );
                     },
                   ),
                 ),
@@ -106,20 +119,76 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
                     crossAxisSpacing: 10,
                     childAspectRatio: 1.2,
                     children: [
-                      categoriaItem(context, 'imagenes/auto.png', 'Automóvil', true),
-                      categoriaItem(context, 'imagenes/minivan.png', 'Minivan', false),
-                      categoriaItem(context, 'imagenes/moto.png', 'Moto', false),
-                      categoriaItem(context, 'imagenes/electricos.png', 'Electricos', false),
+                      categoriaItem(
+                        context,
+                        'imagenes/auto.png',
+                        'Automóvil',
+                        true,
+                      ),
+                      categoriaItem(
+                        context,
+                        'imagenes/minivan.png',
+                        'Minivan',
+                        false,
+                      ),
+                      categoriaItem(
+                        context,
+                        'imagenes/moto.png',
+                        'Moto',
+                        false,
+                      ),
+                      categoriaItem(
+                        context,
+                        'imagenes/electricos.png',
+                        'Electricos',
+                        false,
+                      ),
                     ],
                   ),
+                  const SizedBox(height: 20),
                   const SizedBox(height: 20),
                   const Text(
                     'Ofertas',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 10),
-                  ofertaItem('Chevrolet Kia', 'Dueño: Juan Sebastián', 'assets/carro1.png'),
-                  ofertaItem('Camioneta', 'Dueño: Ángel Santiago', 'assets/carro2.png'),
+                  StreamBuilder(
+                    stream:
+                        FirebaseFirestore.instance
+                            .collection('Vehiculos')
+                            .where('precioPorDia', isLessThan: 20000)
+                            .snapshots(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                        return const Text('No hay vehículos en oferta');
+                      }
+
+                      final vehiculos = snapshot.data!.docs;
+
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: vehiculos.length,
+                        itemBuilder: (context, index) {
+                          final v = vehiculos[index];
+                          final modelo =
+                              v['modelo']?.toString() ?? 'Modelo desconocido';
+                          final propietario =
+                              v['Propietario'] ?? 'Sin propietario';
+                          final precio = (v['precioPorDia'] ?? 0).toDouble();
+
+                          return ofertaItemFirestore(
+                            propietario,
+                            modelo,
+                            precio,
+                          );
+                        },
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
@@ -133,7 +202,12 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
     );
   }
 
-  Widget categoriaItem(BuildContext context, String imagenPath, String titulo, bool esAutomovil) {
+  Widget categoriaItem(
+    BuildContext context,
+    String imagenPath,
+    String titulo,
+    bool esAutomovil,
+  ) {
     return GestureDetector(
       onTap: () {
         if (esAutomovil) {
@@ -145,6 +219,16 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const PaginaMotos()),
+          );
+        } else if (titulo == 'Minivan') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const PaginaMinivan()),
+          );
+        } else if (titulo == 'Electricos') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const PaginaElectrico()),
           );
         }
       },
@@ -179,22 +263,24 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
     );
   }
 
-  Widget ofertaItem(String titulo, String propietario, String imagen) {
+  Widget ofertaItemFirestore(String propietario, String modelo, double precio) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       child: ListTile(
-        leading: Image.asset(
-          imagen,
-          width: 50,
-          height: 50,
-          errorBuilder: (context, error, stackTrace) {
-            return const Icon(Icons.image_not_supported, size: 50, color: Colors.grey);
-          },
+        leading: const Icon(Icons.directions_car, size: 50, color: Colors.blue),
+        title: Text(
+          modelo,
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        title: Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text(propietario),
-        trailing: const Icon(Icons.local_offer, color: Colors.orange),
+        subtitle: Text('Propietario: $propietario'),
+        trailing: Text(
+          '\$${precio.toStringAsFixed(2)}',
+          style: const TextStyle(
+            color: Colors.orange,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
     );
   }

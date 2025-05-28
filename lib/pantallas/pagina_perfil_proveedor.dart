@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Importar Firebase Auth
 import 'package:flutter/services.dart'; // Importar para SystemChrome
 import 'login.dart'; // Pantalla de login
-
+import 'pagina_terminos.dart';
 
 class PaginaPerfilProveedor extends StatefulWidget {
   final Map<String, dynamic>? preloadedUserData; // Datos precargados
@@ -28,10 +28,12 @@ class _PaginaPerfilProveedorState extends State<PaginaPerfilProveedor> {
   @override
   void initState() {
     super.initState();
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: Color(0xFF5A1EFF),
-      statusBarIconBrightness: Brightness.light,
-    ));
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Color(0xFF5A1EFF),
+        statusBarIconBrightness: Brightness.light,
+      ),
+    );
     if (widget.preloadedUserData != null) {
       // Usar datos precargados si están disponibles
       setState(() {
@@ -68,19 +70,20 @@ class _PaginaPerfilProveedorState extends State<PaginaPerfilProveedor> {
       print('UID del usuario autenticado: $uid'); // Depuración
 
       // Verificar si el usuario es proveedor consultando la colección Usuarios
-      final userDoc = await FirebaseFirestore.instance
-          .collection('Usuarios')
-          .doc(uid)
-          .get();
+      final userDoc =
+          await FirebaseFirestore.instance
+              .collection('Usuarios')
+              .doc(uid)
+              .get();
 
       if (!userDoc.exists) {
         print('Usuario no encontrado en la colección Usuarios');
         setState(() {
           isLoading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Usuario no encontrado.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Usuario no encontrado.')));
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const LoginPage()),
@@ -90,7 +93,8 @@ class _PaginaPerfilProveedorState extends State<PaginaPerfilProveedor> {
       }
 
       final userDataFromUsuarios = userDoc.data() as Map<String, dynamic>;
-      final proposito = userDataFromUsuarios['proposito']?.toString().toLowerCase() ?? '';
+      final proposito =
+          userDataFromUsuarios['proposito']?.toString().toLowerCase() ?? '';
       print('Propósito del usuario: $proposito'); // Depuración
 
       if (proposito != 'proveedor') {
@@ -100,7 +104,9 @@ class _PaginaPerfilProveedorState extends State<PaginaPerfilProveedor> {
           isProveedor = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Acceso denegado: No eres un proveedor.')),
+          const SnackBar(
+            content: Text('Acceso denegado: No eres un proveedor.'),
+          ),
         );
         Navigator.pushAndRemoveUntil(
           context,
@@ -116,16 +122,18 @@ class _PaginaPerfilProveedorState extends State<PaginaPerfilProveedor> {
         userData = userDataFromUsuarios; // Usar datos de Usuarios directamente
         isLoading = false;
       });
-      print('Datos del usuario cargados desde Usuarios: $userData'); // Depuración
+      print(
+        'Datos del usuario cargados desde Usuarios: $userData',
+      ); // Depuración
     } catch (e) {
       print('Error al obtener datos: $e');
       setState(() {
         userData = {};
         isLoading = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al cargar datos: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error al cargar datos: $e')));
     }
   }
 
@@ -135,16 +143,19 @@ class _PaginaPerfilProveedorState extends State<PaginaPerfilProveedor> {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) return;
 
-      final userDoc = await FirebaseFirestore.instance
-          .collection('Usuarios')
-          .doc(user.uid)
-          .get();
+      final userDoc =
+          await FirebaseFirestore.instance
+              .collection('Usuarios')
+              .doc(user.uid)
+              .get();
 
       if (userDoc.exists) {
         setState(() {
           userData = userDoc.data();
         });
-        print('Datos recargados desde Firestore (Usuarios): $userData'); // Depuración
+        print(
+          'Datos recargados desde Firestore (Usuarios): $userData',
+        ); // Depuración
       }
     } catch (e) {
       print('Error al recargar datos desde Firestore: $e');
@@ -165,14 +176,29 @@ class _PaginaPerfilProveedorState extends State<PaginaPerfilProveedor> {
     return showDialog<void>(
       context: context,
       builder: (BuildContext context) {
-        final TextEditingController nombreController = TextEditingController(text: nombre);
-        final TextEditingController telefonoController = TextEditingController(text: telefono);
-        final TextEditingController barrioController = TextEditingController(text: barrio);
-        final TextEditingController ciudadController = TextEditingController(text: ciudad);
-        final TextEditingController correoController = TextEditingController(text: correo);
-        final TextEditingController direccionController = TextEditingController(text: direccion);
-        final TextEditingController fechaNacimientoController = TextEditingController(text: fechaNacimiento);
-        final TextEditingController propositoController = TextEditingController(text: proposito);
+        final TextEditingController nombreController = TextEditingController(
+          text: nombre,
+        );
+        final TextEditingController telefonoController = TextEditingController(
+          text: telefono,
+        );
+        final TextEditingController barrioController = TextEditingController(
+          text: barrio,
+        );
+        final TextEditingController ciudadController = TextEditingController(
+          text: ciudad,
+        );
+        final TextEditingController correoController = TextEditingController(
+          text: correo,
+        );
+        final TextEditingController direccionController = TextEditingController(
+          text: direccion,
+        );
+        final TextEditingController fechaNacimientoController =
+            TextEditingController(text: fechaNacimiento);
+        final TextEditingController propositoController = TextEditingController(
+          text: proposito,
+        );
 
         return AlertDialog(
           title: const Text('Editar Datos'),
@@ -206,7 +232,9 @@ class _PaginaPerfilProveedorState extends State<PaginaPerfilProveedor> {
                 ),
                 TextFormField(
                   controller: fechaNacimientoController,
-                  decoration: const InputDecoration(labelText: 'Fecha Nacimiento'),
+                  decoration: const InputDecoration(
+                    labelText: 'Fecha Nacimiento',
+                  ),
                 ),
                 TextFormField(
                   controller: propositoController,
@@ -230,7 +258,9 @@ class _PaginaPerfilProveedorState extends State<PaginaPerfilProveedor> {
                   final user = FirebaseAuth.instance.currentUser;
                   if (user == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Error: Debes iniciar sesión.')),
+                      const SnackBar(
+                        content: Text('Error: Debes iniciar sesión.'),
+                      ),
                     );
                     return;
                   }
@@ -240,15 +270,15 @@ class _PaginaPerfilProveedorState extends State<PaginaPerfilProveedor> {
                       .collection('Usuarios')
                       .doc(user.uid)
                       .set({
-                    'nombre': nombreController.text,
-                    'telefono': telefonoController.text,
-                    'barrio': barrioController.text,
-                    'ciudad': ciudadController.text,
-                    'correo': correoController.text,
-                    'direccion': direccionController.text,
-                    'fechaNacimiento': fechaNacimientoController.text,
-                    'proposito': propositoController.text,
-                  }, SetOptions(merge: true));
+                        'nombre': nombreController.text,
+                        'telefono': telefonoController.text,
+                        'barrio': barrioController.text,
+                        'ciudad': ciudadController.text,
+                        'correo': correoController.text,
+                        'direccion': direccionController.text,
+                        'fechaNacimiento': fechaNacimientoController.text,
+                        'proposito': propositoController.text,
+                      }, SetOptions(merge: true));
 
                   // Actualizar el estado local
                   setState(() {
@@ -258,7 +288,8 @@ class _PaginaPerfilProveedorState extends State<PaginaPerfilProveedor> {
                     userData?['ciudad'] = ciudadController.text;
                     userData?['correo'] = correoController.text;
                     userData?['direccion'] = direccionController.text;
-                    userData?['fechaNacimiento'] = fechaNacimientoController.text;
+                    userData?['fechaNacimiento'] =
+                        fechaNacimientoController.text;
                     userData?['proposito'] = propositoController.text;
                   });
 
@@ -269,7 +300,9 @@ class _PaginaPerfilProveedorState extends State<PaginaPerfilProveedor> {
                   await _recargarDatosDesdeFirestore();
 
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Datos actualizados correctamente')),
+                    const SnackBar(
+                      content: Text('Datos actualizados correctamente'),
+                    ),
                   );
                   Navigator.of(context).pop();
                 } catch (e) {
@@ -285,137 +318,161 @@ class _PaginaPerfilProveedorState extends State<PaginaPerfilProveedor> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : !isProveedor
+      body:
+          isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : !isProveedor
               ? const Center(child: Text('Acceso denegado.'))
               : SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      Stack(
-                        children: [
-                          Container(
-                            height: 200,
+                child: Column(
+                  children: [
+                    Stack(
+                      children: [
+                        Container(
+                          height: 200,
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Color(0xFF4B4EAB), Color(0xFF8B5CF6)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 120,
+                          left: 0,
+                          right: 0,
+                          child: Center(
+                            child: CircleAvatar(
+                              radius: 50,
+                              backgroundColor: Colors.white,
+                              child: CircleAvatar(
+                                radius: 47,
+                                child: Icon(
+                                  Icons.person,
+                                  size: 50,
+                                  color: Colors.grey[700],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 60),
+                    Text(
+                      userData?['nombre'] ?? '',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    sectionTitle("Información Personal"),
+                    infoItem("Nombre", userData?['nombre']),
+                    infoItem("Correo", userData?['correo']),
+                    infoItem("Teléfono", userData?['telefono']),
+                    infoItem("Fecha Nac", userData?['fechaNacimiento']),
+                    infoItem("Dirección", userData?['direccion']),
+                    infoItem("Barrio", userData?['barrio']),
+                    infoItem("Ciudad", userData?['ciudad']),
+                    infoItem("Propósito", userData?['proposito']),
+                    const SizedBox(height: 15),
+                    Center(
+                      child: SizedBox(
+                        width: 200, // Ancho más alargado
+                        child: ElevatedButton(
+                          onPressed: () {
+                            _mostrarDialogoEditarDatos(
+                              context,
+                            ); // Llamar al diálogo de edición
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            padding: const EdgeInsets.all(
+                              0,
+                            ), // Ajustar padding para el gradiente
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: Ink(
                             decoration: const BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [Color(0xFF4B4EAB), Color(0xFF8B5CF6)],
+                                colors: [Color(0xFF7b43cd), Color(0xFF2575FC)],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
-                            ),
-                          ),
-                          Positioned(
-                            top: 120,
-                            left: 0,
-                            right: 0,
-                            child: Center(
-                              child: CircleAvatar(
-                                radius: 50,
-                                backgroundColor: Colors.white,
-                                child: CircleAvatar(
-                                  radius: 47,
-                                  child: Icon(
-                                    Icons.person,
-                                    size: 50,
-                                    color: Colors.grey[700],
-                                  ),
-                                ),
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(10),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 60),
-                      Text(
-                        userData?['nombre'] ?? '',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      sectionTitle("Información Personal"),
-                      infoItem("Nombre", userData?['nombre']),
-                      infoItem("Correo", userData?['correo']),
-                      infoItem("Teléfono", userData?['telefono']),
-                      infoItem("Fecha Nac", userData?['fechaNacimiento']),
-                      infoItem("Dirección", userData?['direccion']),
-                      infoItem("Barrio", userData?['barrio']),
-                      infoItem("Ciudad", userData?['ciudad']),
-                      infoItem("Propósito", userData?['proposito']),
-                      const SizedBox(height: 15),
-                      Center(
-                        child: SizedBox(
-                          width: 200, // Ancho más alargado
-                          child: ElevatedButton(
-                            onPressed: () {
-                              _mostrarDialogoEditarDatos(context); // Llamar al diálogo de edición
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.transparent,
-                              padding: const EdgeInsets.all(0), // Ajustar padding para el gradiente
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            child: Ink(
-                              decoration: const BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [Color(0xFF7b43cd), Color(0xFF2575FC)],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                borderRadius: BorderRadius.all(Radius.circular(10)),
-                              ),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Ajuste de padding
-                                alignment: Alignment.center,
-                                child: const Text(
-                                  "Editar datos",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 12,
+                                horizontal: 20,
+                              ), // Ajuste de padding
+                              alignment: Alignment.center,
+                              child: const Text(
+                                "Editar datos",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 30),
-                      listTileItem(Icons.history, "Historial"),
-                      listTileItem(Icons.description, "Términos y condiciones"),
-                      // Botón de cerrar sesión con texto negro
-                      ListTile(
-                        leading: const Icon(
-                          Icons.logout,
-                          color: Color(0xFF4B4EAB),
-                        ),
-                        title: const Text(
-                          "Cerrar sesión",
-                          style: TextStyle(color: Colors.black),
-                        ),
-                        trailing: const Icon(Icons.keyboard_arrow_right),
-                        onTap: () {
-                          FirebaseAuth.instance.signOut();
-                          Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const LoginPage(),
-                            ),
-                            (Route<dynamic> route) => false,
-                          );
-                        },
+                    ),
+                    const SizedBox(height: 30),
+                    listTileItem(Icons.history, "Historial"),
+                    ListTile(
+                      leading: const Icon(
+                        Icons.description,
+                        color: Color(0xFF4B4EAB),
                       ),
-                      const SizedBox(height: 30),
-                    ],
-                  ),
+                      title: const Text("Términos y condiciones"),
+                      trailing: const Icon(Icons.keyboard_arrow_right),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PaginaTerminos(),
+                          ),
+                        );
+                      },
+                    ),
+                    // Botón de cerrar sesión con texto negro
+                    ListTile(
+                      leading: const Icon(
+                        Icons.logout,
+                        color: Color(0xFF4B4EAB),
+                      ),
+                      title: const Text(
+                        "Cerrar sesión",
+                        style: TextStyle(color: Colors.black),
+                      ),
+                      trailing: const Icon(Icons.keyboard_arrow_right),
+                      onTap: () {
+                        FirebaseAuth.instance.signOut();
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const LoginPage(),
+                          ),
+                          (Route<dynamic> route) => false,
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 30),
+                  ],
                 ),
+              ),
     );
   }
 
