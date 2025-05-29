@@ -1,10 +1,9 @@
-// Importaciones necesarias
 import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox_gl;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart' as geo;
 import 'package:flutter/services.dart';
-import 'package:rental/widgets/custom_widgets.dart';
+
 
 class PaginaMapa extends StatefulWidget {
   const PaginaMapa({Key? key}) : super(key: key);
@@ -15,7 +14,6 @@ class PaginaMapa extends StatefulWidget {
 
 class _PaginaMapaState extends State<PaginaMapa> {
   mapbox_gl.MapboxMap? _mapboxMap;
-  int _selectedIndex = 1; // Índice inicial para la página del mapa (ícono de mapa)
 
   @override
   void initState() {
@@ -77,18 +75,6 @@ class _PaginaMapaState extends State<PaginaMapa> {
     );
 
     _centerToUserLocation(); // Centrar automáticamente en la ubicación actual
-  }
-
-  void _onItemTapped(int index) {
-    if (index == 0) {
-      Navigator.pushNamed(context, '/inicio');
-    } else if (index == 1) {
-      // Ya estamos en la página del mapa
-    } else if (index == 2) {
-      Navigator.pushNamed(context, '/favoritos');
-    } else if (index == 3) {
-      Navigator.pushNamed(context, '/perfil');
-    }
   }
 
   @override
@@ -170,10 +156,6 @@ class _PaginaMapaState extends State<PaginaMapa> {
             ),
           ),
         ],
-      ),
-      bottomNavigationBar: CustomNavBar(
-        selectedIndex: _selectedIndex,
-        onTap: _onItemTapped,
       ),
     );
   }

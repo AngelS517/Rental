@@ -347,7 +347,7 @@ class _PublicadosProveedorState extends State<PublicadosProveedor> {
             leading: ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Image.network(
-                imagenUrl,
+                imagenUrl.isNotEmpty ? imagenUrl : 'https://via.placeholder.com/60', // Placeholder si no hay imagen
                 width: 60,
                 height: 60,
                 fit: BoxFit.cover,
@@ -443,9 +443,10 @@ class _PublicadosProveedorState extends State<PublicadosProveedor> {
                   itemBuilder: (context, index) {
                     final vehiculo = vehiculos[index];
                     final data = vehiculo.data() as Map<String, dynamic>;
+                    final imagenUrl = data['imagen']?.toString() ?? '';
                     return vehiculoItem(
                       data['marca']?.toString() ?? 'Sin marca',
-                      '', // Imagen eliminada
+                      imagenUrl,
                       data['direccion']?.toString() ?? 'Dirección no disponible',
                       data['ciudad']?.toString() ?? 'Ciudad no disponible',
                       vehiculo.id,

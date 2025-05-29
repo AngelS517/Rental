@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:rental/widgets/custom_widgets.dart'; // Asegúrate de tener este import
+
 
 class PaginaFavoritos extends StatefulWidget {
   const PaginaFavoritos({super.key});
@@ -9,25 +9,6 @@ class PaginaFavoritos extends StatefulWidget {
 }
 
 class _PaginaFavoritosState extends State<PaginaFavoritos> {
-  int _selectedIndex = 2;
-
-  void _onItemTapped(int index) {
-    switch (index) {
-      case 0:
-        Navigator.pushNamed(context, '/inicio');
-        break;
-      case 1:
-        Navigator.pushNamed(context, '/mapa');
-        break;
-      case 2:
-        Navigator.pushNamed(context, '/favoritos');
-        break;
-      case 3:
-        Navigator.pushNamed(context, '/perfil');
-        break;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -40,10 +21,6 @@ class _PaginaFavoritosState extends State<PaginaFavoritos> {
           'Esta es la página de Favoritos',
           style: TextStyle(fontSize: 20),
         ),
-      ),
-      bottomNavigationBar: CustomNavBar(
-        selectedIndex: _selectedIndex,
-        onTap: _onItemTapped,
       ),
     );
   }

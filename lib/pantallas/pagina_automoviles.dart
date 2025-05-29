@@ -4,7 +4,9 @@ import 'package:rental/widgets/custom_widgets.dart';
 import 'pagina_descripcion_vehiculo.dart';
 
 class PaginaVehiculos extends StatefulWidget {
-  const PaginaVehiculos({super.key});
+  final String? categoria; // Hacer el parámetro opcional
+
+  const PaginaVehiculos({super.key, this.categoria});
 
   @override
   State<PaginaVehiculos> createState() => _PaginaVehiculosState();
@@ -39,9 +41,16 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
 
   @override
   Widget build(BuildContext context) {
+    // Obtener la categoría desde los argumentos de la ruta, si están disponibles
+    final routeArgs = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    final String categoria = routeArgs != null && routeArgs.containsKey('categoria')
+        ? routeArgs['categoria'] as String
+        : widget.categoria ?? 'Automovil'; // Valor predeterminado si no hay argumentos
+
+    // Usar la categoría para filtrar los vehículos
     Query<Map<String, dynamic>> query = FirebaseFirestore.instance
         .collection('Vehiculos')
-        .where('categoria', isEqualTo: 'Automovil');
+        .where('categoria', isEqualTo: categoria);
 
     return Scaffold(
       appBar: PreferredSize(
@@ -71,12 +80,17 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                   padding: const EdgeInsets.all(8),
                   child: Image.asset('imagenes/logorental.png', height: 40),
                 ),
-                const Text(
-                  'Lista de Automóviles',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      'Lista de $categoria', // Título dinámico según la categoría
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center, // Asegurar alineación centrada
+                    ),
                   ),
                 ),
               ],
@@ -120,8 +134,8 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                 }
 
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(
-                    child: Text('No hay automóviles disponibles.'),
+                  return Center(
+                    child: Text('No hay ${categoria.toLowerCase()} disponibles.'),
                   );
                 }
 
@@ -135,8 +149,8 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                     }).toList();
 
                 if (vehiculos.isEmpty) {
-                  return const Center(
-                    child: Text('No hay automóviles válidos disponibles.'),
+                  return Center(
+                    child: Text('No hay ${categoria.toLowerCase()} válidos disponibles.'),
                   );
                 }
 
@@ -343,7 +357,7 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                 Text(
                   '\$${precioPorDia.toStringAsFixed(0)} COP/Día',
                   style: const TextStyle(
-                    fontSize: 18,
+                    fontSize: 22, // Aumenté de 18 a 22 para agrandar el precio
                     fontWeight: FontWeight.bold,
                     color: Colors.green,
                   ),
@@ -383,29 +397,6 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pushNamed(
-                      context,
-                      '/mapa_automovil',
-                      arguments: {
-                        'direccion': direccion,
-                        'ciudad': ciudad,
-                        'pais': 'Colombia',
-                      },
-                    );
-                  },
-                  icon: const Icon(Icons.location_on, size: 16),
-                  label: const Text('Ubicación'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue[800],
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
                 TextButton(
                   onPressed: () {
                     Navigator.push(

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
+import 'dart:io';
+import 'dart:convert';
 
 class PaginaAgregar extends StatefulWidget {
   const PaginaAgregar({super.key});
@@ -27,6 +31,9 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
   bool _ventilacionChecked = false;
   String? _kilometrajeType;
   String? _proveedorUid;
+  File? _imageFile; // Para almacenar la imagen seleccionada
+
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -60,9 +67,97 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
     }
   }
 
+  Future<String?> _uploadImageToCloudinary(File imageFile) async {
+    try {
+      // Validar el tamaño de la imagen (máximo 10 MB)
+      final imageSize = await imageFile.length();
+      if (imageSize > 10 * 1024 * 1024) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('La imagen es demasiado grande. Máximo 10 MB.')),
+        );
+        return null;
+      }
+
+      var uri = Uri.parse('https://api.cloudinary.com/v1_1/dzmcnktot/image/upload');
+      var request = http.MultipartRequest('POST', uri)
+        ..fields['upload_preset'] = 'Rental'
+        ..files.add(await http.MultipartFile.fromPath('file', imageFile.path));
+
+      var response = await request.send().timeout(const Duration(seconds: 30), onTimeout: () {
+        throw Exception('Tiempo de espera agotado al subir la imagen.');
+      });
+
+      if (response.statusCode == 200) {
+        var responseData = await response.stream.bytesToString();
+        print('Cloudinary Response: $responseData'); // Depuración
+        var jsonResponse = jsonDecode(responseData);
+        if (jsonResponse is Map && jsonResponse.containsKey('secure_url')) {
+          final url = jsonResponse['secure_url'] as String?;
+          if (url != null && url.isNotEmpty) {
+            print('Image URL: $url'); // Depuración
+            return url;
+          } else {
+            print('Error: secure_url is null or empty');
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Error: No se recibió una URL válida de la imagen.')),
+            );
+            return null;
+          }
+        } else {
+          print('Error: Invalid JSON response - $jsonResponse');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Error: Respuesta inválida de Cloudinary.')),
+          );
+          return null;
+        }
+      } else {
+        var responseData = await response.stream.bytesToString();
+        print('Upload Error: ${response.statusCode} - $responseData');
+        if (response.statusCode == 400 && responseData.contains('whitelisted')) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Error: Configura el upload preset "Rental" como Unsigned en Cloudinary.'),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error al subir la imagen: Código ${response.statusCode}')),
+          );
+        }
+        return null;
+      }
+    } catch (e) {
+      print('Upload Exception: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al subir la imagen: $e')),
+      );
+      return null;
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _imageFile = File(pickedFile.path);
+      });
+    }
+  }
+
   Future<void> _registrarVehiculo() async {
     if (_formKey.currentState!.validate() && _propietario != null && _proveedorUid != null) {
       try {
+        String? imageUrl;
+        if (_imageFile != null) {
+          imageUrl = await _uploadImageToCloudinary(_imageFile!);
+          if (imageUrl == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Fallo al subir la imagen. Intenta de nuevo.')),
+            );
+            return; // Detener el registro si la imagen no se sube
+          }
+        }
+
         final detalles = {
           if (_numPasajeros != null) '#pasajeros': int.parse(_numPasajeros!),
           if (_numPuertas != null) '#puertas': int.parse(_numPuertas!),
@@ -72,7 +167,7 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
           if (_tipoTransmision != null) 'tipoDeTransmision': _tipoTransmision,
         };
 
-        await FirebaseFirestore.instance.collection('Vehiculos').add({
+        DocumentReference docRef = await FirebaseFirestore.instance.collection('Vehiculos').add({
           'Propietario': _propietario,
           'categoria': _selectedCategory,
           'ciudad': _ciudadController.text,
@@ -84,9 +179,15 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
           'placa': _placaController.text,
           'precioPorDia': double.tryParse(_precioController.text) ?? 0.0,
           'proveedorUid': _proveedorUid,
+          'imagen': imageUrl, // Guardar el URL de Cloudinary en Firestore
         });
 
+        print('Vehículo registrado con ID: ${docRef.id}, Imagen URL: $imageUrl'); // Depuración
+
         if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Vehículo registrado correctamente')),
+          );
           Navigator.pop(context);
         }
       } catch (e) {
@@ -271,6 +372,25 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
                     },
                     validator: (value) => value == null ? 'Seleccione un valor' : null,
                   ),
+                  // Campo para seleccionar imagen
+                  ListTile(
+                    leading: const Icon(Icons.image),
+                    title: const Text('Seleccionar Imagen'),
+                    subtitle: _imageFile != null
+                        ? const Text('Imagen seleccionada')
+                        : const Text('Sin imagen seleccionada'),
+                    onTap: _pickImage,
+                  ),
+                  if (_imageFile != null)
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Image.file(
+                        _imageFile!,
+                        height: 100,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
                 ],
               ),
             ),

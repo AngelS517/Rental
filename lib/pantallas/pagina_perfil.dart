@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Importar Firebase Auth
-import 'package:flutter/services.dart'; // Importar para SystemChrome
-import 'login.dart'; // Pantalla de login
-import 'package:rental/widgets/custom_widgets.dart'; // Para CustomNavBar
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/services.dart';
+import 'login.dart';
+
 import 'pagina_terminos.dart';
 
 class PaginaPerfilCliente extends StatefulWidget {
-  final Map<String, dynamic>? preloadedUserData; // Datos precargados
-  final bool isCliente; // Estado precargado
+  final Map<String, dynamic>? preloadedUserData;
+  final bool isCliente;
 
   const PaginaPerfilCliente({
     super.key,
@@ -24,7 +24,6 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
   Map<String, dynamic>? userData;
   bool isLoading = true;
   bool isCliente = false;
-  int _selectedIndex = 3; // Índice para la página de perfil
 
   @override
   void initState() {
@@ -36,14 +35,12 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
       ),
     );
     if (widget.preloadedUserData != null) {
-      // Usar datos precargados si están disponibles
       setState(() {
         userData = widget.preloadedUserData;
         isCliente = widget.isCliente;
         isLoading = false;
       });
     } else {
-      // Si no hay datos precargados, cargarlos
       verificarUsuarioYObtenerDatos();
     }
   }
@@ -68,9 +65,8 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
       }
 
       final uid = user.uid;
-      print('UID del usuario autenticado: $uid'); // Depuración
+      print('UID del usuario autenticado: $uid');
 
-      // Verificar si el usuario es cliente consultando la colección Usuarios
       final userDoc =
           await FirebaseFirestore.instance
               .collection('Usuarios')
@@ -96,7 +92,7 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
       final userDataFromUsuarios = userDoc.data() as Map<String, dynamic>;
       final proposito =
           userDataFromUsuarios['proposito']?.toString().toLowerCase() ?? '';
-      print('Propósito del usuario: $proposito'); // Depuración
+      print('Propósito del usuario: $proposito');
 
       if (proposito == 'proveedor') {
         print('El usuario no es cliente');
@@ -115,15 +111,12 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
         return;
       }
 
-      // Si es cliente, cargar datos de la colección Usuarios
       setState(() {
         isCliente = true;
-        userData = userDataFromUsuarios; // Usar datos de Usuarios directamente
+        userData = userDataFromUsuarios;
         isLoading = false;
       });
-      print(
-        'Datos del usuario cargados desde Usuarios: $userData',
-      ); // Depuración
+      print('Datos del usuario cargados desde Usuarios: $userData');
     } catch (e) {
       print('Error al obtener datos: $e');
       setState(() {
@@ -136,7 +129,6 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
     }
   }
 
-  // Función para recargar datos desde Firestore
   Future<void> _recargarDatosDesdeFirestore() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
@@ -152,16 +144,13 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
         setState(() {
           userData = userDoc.data();
         });
-        print(
-          'Datos recargados desde Firestore (Usuarios): $userData',
-        ); // Depuración
+        print('Datos recargados desde Firestore (Usuarios): $userData');
       }
     } catch (e) {
       print('Error al recargar datos desde Firestore: $e');
     }
   }
 
-  // Función para mostrar el diálogo de edición
   Future<void> _mostrarDialogoEditarDatos(BuildContext context) async {
     String? nombre = userData?['nombre'];
     String? telefono = userData?['telefono'];
@@ -255,7 +244,6 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
                     return;
                   }
 
-                  // Guardar los datos en la colección Usuarios
                   await FirebaseFirestore.instance
                       .collection('Usuarios')
                       .doc(user.uid)
@@ -269,7 +257,6 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
                         'fechaNacimiento': fechaNacimientoController.text,
                       }, SetOptions(merge: true));
 
-                  // Actualizar el estado local
                   setState(() {
                     userData?['nombre'] = nombreController.text;
                     userData?['telefono'] = telefonoController.text;
@@ -281,10 +268,8 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
                         fechaNacimientoController.text;
                   });
 
-                  // Depuración: Verificar que userData se actualizó
                   print('userData actualizado localmente: $userData');
 
-                  // Recargar datos desde Firestore para confirmar
                   await _recargarDatosDesdeFirestore();
 
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -304,22 +289,6 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
         );
       },
     );
-  }
-
-  void _onItemTapped(int index) {
-    if (index == 0) {
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        '/inicio',
-        (Route<dynamic> route) => false,
-      ); // Navegar a Inicio y limpiar la pila
-    } else if (index == 1) {
-      Navigator.pushNamed(context, '/mapa');
-    } else if (index == 2) {
-      Navigator.pushNamed(context, '/favoritos');
-    } else if (index == 3) {
-      Navigator.pushNamed(context, '/perfil');
-    }
   }
 
   @override
@@ -347,7 +316,7 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
                       radius: 20,
                       backgroundColor: Colors.white,
                       child: Image.asset(
-                        'imagenes/logorental.png', // Asegúrate de tener esta imagen
+                        'imagenes/logorental.png',
                         height: 36,
                       ),
                     ),
@@ -360,10 +329,6 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
           ),
         ),
         body: const Center(child: CircularProgressIndicator()),
-        bottomNavigationBar: CustomNavBar(
-          selectedIndex: _selectedIndex,
-          onTap: _onItemTapped,
-        ),
       );
     }
 
@@ -393,7 +358,7 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
                     radius: 20,
                     backgroundColor: Colors.white,
                     child: Image.asset(
-                      'imagenes/logorental.png', // Asegúrate de tener esta imagen
+                      'imagenes/logorental.png',
                       height: 36,
                     ),
                   ),
@@ -458,18 +423,14 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
             const SizedBox(height: 15),
             Center(
               child: SizedBox(
-                width: 200, // Ancho más alargado
+                width: 200,
                 child: ElevatedButton(
                   onPressed: () {
-                    _mostrarDialogoEditarDatos(
-                      context,
-                    ); // Llamar al diálogo de edición
+                    _mostrarDialogoEditarDatos(context);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.transparent,
-                    padding: const EdgeInsets.all(
-                      0,
-                    ), // Ajustar padding para el gradiente
+                    padding: const EdgeInsets.all(0),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -487,7 +448,7 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
                       padding: const EdgeInsets.symmetric(
                         vertical: 12,
                         horizontal: 20,
-                      ), // Ajuste de padding
+                      ),
                       alignment: Alignment.center,
                       child: const Text(
                         "Editar datos",
@@ -537,10 +498,6 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
           ],
         ),
       ),
-      bottomNavigationBar: CustomNavBar(
-        selectedIndex: _selectedIndex,
-        onTap: _onItemTapped,
-      ),
     );
   }
 
@@ -586,9 +543,7 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
       leading: Icon(icon, color: const Color(0xFF4B4EAB)),
       title: Text(title),
       trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: () {
-        // Aquí puedes agregar acciones personalizadas si es necesario
-      },
+      onTap: () {},
     );
   }
 }
