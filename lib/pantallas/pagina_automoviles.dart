@@ -4,7 +4,7 @@ import 'package:rental/widgets/custom_widgets.dart';
 import 'pagina_descripcion_vehiculo.dart';
 
 class PaginaVehiculos extends StatefulWidget {
-  final String? categoria; // Hacer el parámetro opcional
+  final String? categoria;
 
   const PaginaVehiculos({super.key, this.categoria});
 
@@ -41,13 +41,13 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
 
   @override
   Widget build(BuildContext context) {
-    // Obtener la categoría desde los argumentos de la ruta, si están disponibles
-    final routeArgs = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    final String categoria = routeArgs != null && routeArgs.containsKey('categoria')
-        ? routeArgs['categoria'] as String
-        : widget.categoria ?? 'Automovil'; // Valor predeterminado si no hay argumentos
+    final routeArgs =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    final String categoria =
+        routeArgs != null && routeArgs.containsKey('categoria')
+            ? routeArgs['categoria'] as String
+            : widget.categoria ?? 'Automovil';
 
-    // Usar la categoría para filtrar los vehículos
     Query<Map<String, dynamic>> query = FirebaseFirestore.instance
         .collection('Vehiculos')
         .where('categoria', isEqualTo: categoria);
@@ -83,13 +83,13 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                 Expanded(
                   child: Center(
                     child: Text(
-                      'Lista de $categoria', // Título dinámico según la categoría
+                      'Lista de $categoria',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
-                      textAlign: TextAlign.center, // Asegurar alineación centrada
+                      textAlign: TextAlign.center,
                     ),
                   ),
                 ),
@@ -135,7 +135,9 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
 
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                   return Center(
-                    child: Text('No hay ${categoria.toLowerCase()} disponibles.'),
+                    child: Text(
+                      'No hay ${categoria.toLowerCase()} disponibles.',
+                    ),
                   );
                 }
 
@@ -150,7 +152,9 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
 
                 if (vehiculos.isEmpty) {
                   return Center(
-                    child: Text('No hay ${categoria.toLowerCase()} válidos disponibles.'),
+                    child: Text(
+                      'No hay ${categoria.toLowerCase()} válidos disponibles.',
+                    ),
                   );
                 }
 
@@ -178,21 +182,45 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                             : (data['calificacion'] as num?)?.toDouble() ?? 0.0;
                     final placa = data['placa'] as String;
 
-                    return vehiculoItem(
-                      data['marca']?.toString() ?? 'Sin marca',
-                      data['modelo']?.toString() ?? '',
-                      data['precioPorDia']?.toDouble() ?? 0.0,
-                      data['Propietario']?.toString() ?? 'Desconocido',
-                      data['imagen']?.toString() ?? '',
-                      data['direccion']?.toString() ?? 'No disponible',
-                      data['ciudad']?.toString() ?? 'Ciudad desconocida',
-                      data['detalles']?['tipoCombustible']?.toString() ??
-                          'No especificado',
-                      data['detalles']?['#pasajeros']?.toString() ?? 'N/A',
-                      data['detalles']?['kilometraje']?.toString() ??
-                          'No especificado',
-                      calificacion,
-                      placa,
+                    return StatefulBuilder(
+                      builder: (context, setState) {
+                        double _selectedRating = calificacion;
+
+                        void _updateRating(double rating) async {
+                          setState(() {
+                            _selectedRating = rating;
+                          });
+
+                          try {
+                            await FirebaseFirestore.instance
+                                .collection('Vehiculos')
+                                .doc(
+                                  vehiculos[index].id,
+                                ) // Cambia esto si `placa` es el ID real
+                                .update({'calificacion': rating});
+                          } catch (e) {
+                            print('Error al actualizar calificación: $e');
+                          }
+                        }
+
+                        return vehiculoItem(
+                          data['marca']?.toString() ?? 'Sin marca',
+                          data['modelo']?.toString() ?? '',
+                          data['precioPorDia']?.toDouble() ?? 0.0,
+                          data['Propietario']?.toString() ?? 'Desconocido',
+                          data['imagen']?.toString() ?? '',
+                          data['direccion']?.toString() ?? 'No disponible',
+                          data['ciudad']?.toString() ?? 'Ciudad desconocida',
+                          data['detalles']?['tipoCombustible']?.toString() ??
+                              'No especificado',
+                          data['detalles']?['#pasajeros']?.toString() ?? 'N/A',
+                          data['detalles']?['kilometraje']?.toString() ??
+                              'No especificado',
+                          _selectedRating,
+                          placa,
+                          (double rating) => _updateRating(rating),
+                        );
+                      },
                     );
                   },
                 );
@@ -221,6 +249,7 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
     String kilometraje,
     double calificacion,
     String placa,
+    Function(double) onRatingSelected, // ✅ nueva función callback
   ) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -357,7 +386,7 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                 Text(
                   '\$${precioPorDia.toStringAsFixed(0)} COP/Día',
                   style: const TextStyle(
-                    fontSize: 22, // Aumenté de 18 a 22 para agrandar el precio
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
                     color: Colors.green,
                   ),
@@ -366,32 +395,18 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
             ),
             const SizedBox(height: 4),
             Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Row(
-                  children: List.generate(5, (index) {
-                    if (index < calificacion.floor()) {
-                      return const Icon(
-                        Icons.star,
-                        color: Colors.amber,
-                        size: 16,
-                      );
-                    } else if (index < calificacion) {
-                      return const Icon(
-                        Icons.star_half,
-                        color: Colors.amber,
-                        size: 16,
-                      );
-                    } else {
-                      return const Icon(
-                        Icons.star_border,
-                        color: Colors.grey,
-                        size: 16,
-                      );
-                    }
-                  }),
-                ),
-              ],
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: List.generate(5, (index) {
+                final starValue = index + 1;
+                return GestureDetector(
+                  onTap: () => onRatingSelected(starValue.toDouble()),
+                  child: Icon(
+                    starValue <= calificacion ? Icons.star : Icons.star_border,
+                    color: Colors.amber,
+                    size: 24,
+                  ),
+                );
+              }),
             ),
             const SizedBox(height: 8),
             Row(
