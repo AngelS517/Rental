@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:rental/widgets/custom_widgets.dart';
-import 'pagina_descripcion_vehiculo.dart';
+
 
 class PaginaVehiculos extends StatefulWidget {
   final String? categoria;
@@ -17,9 +17,16 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
   String _sortOrder = 'default';
 
   void _onItemTapped(int index) {
+    setState(() => _selectedIndex = index);
     switch (index) {
       case 0:
-        Navigator.pushNamed(context, '/inicio');
+        // Regresar a PaginaPrincipal sin crear una nueva instancia
+        Navigator.popUntil(context, (route) {
+          return route.settings.name == '/inicio' || route.isFirst;
+        });
+        if (ModalRoute.of(context)?.settings.name != '/inicio') {
+          Navigator.pushNamed(context, '/inicio');
+        }
         break;
       case 1:
         Navigator.pushNamed(context, '/mapa');
@@ -72,13 +79,23 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white,
-                  ),
-                  padding: const EdgeInsets.all(8),
-                  child: Image.asset('imagenes/logorental.png', height: 40),
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      onPressed: () {
+                        Navigator.pop(context); // Regresa a la pantalla anterior
+                      },
+                    ),
+                    Container(
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white,
+                      ),
+                      padding: const EdgeInsets.all(8),
+                      child: Image.asset('imagenes/logorental.png', height: 40),
+                    ),
+                  ],
                 ),
                 Expanded(
                   child: Center(
@@ -194,9 +211,7 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                           try {
                             await FirebaseFirestore.instance
                                 .collection('Vehiculos')
-                                .doc(
-                                  vehiculos[index].id,
-                                ) // Cambia esto si `placa` es el ID real
+                                .doc(vehiculos[index].id)
                                 .update({'calificacion': rating});
                           } catch (e) {
                             print('Error al actualizar calificación: $e');
@@ -249,7 +264,7 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
     String kilometraje,
     double calificacion,
     String placa,
-    Function(double) onRatingSelected, // ✅ nueva función callback
+    Function(double) onRatingSelected,
   ) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -414,13 +429,10 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
               children: [
                 TextButton(
                   onPressed: () {
-                    Navigator.push(
+                    Navigator.pushNamed(
                       context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) =>
-                                PaginaDescripcionVehiculo(placa: placa),
-                      ),
+                      '/descripcion',
+                      arguments: {'placa': placa},
                     );
                   },
                   style: TextButton.styleFrom(
@@ -439,4 +451,4 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
       ),
     );
   }
-}
+} 

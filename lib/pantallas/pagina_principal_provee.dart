@@ -1,5 +1,3 @@
-// archivo: pagina_principal_proveedor.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -7,7 +5,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:rental/widgets/custom_widgets_proveedor.dart';
 import 'pagina_perfil_proveedor.dart';
 import 'publicados_proveedor.dart';
-
 
 class PaginaPrincipalProveedor extends StatefulWidget {
   const PaginaPrincipalProveedor({super.key});
@@ -95,49 +92,32 @@ class _PaginaPrincipalProveedorState extends State<PaginaPrincipalProveedor> {
       0: 'Página Principal - Proveedor',
       1: 'Mis Vehículos Publicados',
       2: 'Estadísticas',
-      3: 'Perfil'
+      3: 'Mi Perfil'
     };
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF071082), Color(0xFF7B43CD)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: CircleAvatar(
+            radius: 20,
+            backgroundColor: Colors.white,
+            child: Image.asset(
+              'imagenes/logorental.png',
+              height: 36,
             ),
           ),
         ),
-        title: _selectedIndex == 3
-            ? Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: Colors.white,
-                    child: const CircleAvatar(
-                      radius: 18,
-                      backgroundImage: AssetImage('images/logorental.png'),
-                    ),
-                  ),
-                  const Expanded(
-                    child: Center(
-                      child: Text(
-                        'Mi Perfil',
-                        style: TextStyle(color: Colors.white, fontSize: 20),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 40),
-                ],
-              )
-            : Text(
-                titles[_selectedIndex]!,
-                style: const TextStyle(color: Colors.white),
-              ),
+        title: Text(
+          titles[_selectedIndex]!,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: const Color(0xFF5A1EFF),
+        elevation: 0,
       ),
       body: IndexedStack(
         index: _selectedIndex,

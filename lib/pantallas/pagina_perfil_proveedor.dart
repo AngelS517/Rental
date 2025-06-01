@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Importar Firebase Auth
 import 'package:flutter/services.dart'; // Importar para SystemChrome
+import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'login.dart'; // Pantalla de login
 import 'pagina_terminos.dart';
 
@@ -23,7 +26,8 @@ class _PaginaPerfilProveedorState extends State<PaginaPerfilProveedor> {
   Map<String, dynamic>? userData;
   bool isLoading = true;
   bool isProveedor = false;
-  // Índice para la página de perfil
+  String? _imageUrl; // URL de la imagen de perfil
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -39,6 +43,7 @@ class _PaginaPerfilProveedorState extends State<PaginaPerfilProveedor> {
       setState(() {
         userData = widget.preloadedUserData;
         isProveedor = widget.isProveedor;
+        _imageUrl = userData?['imagen'];
         isLoading = false;
       });
     } else {
@@ -71,10 +76,7 @@ class _PaginaPerfilProveedorState extends State<PaginaPerfilProveedor> {
 
       // Verificar si el usuario es proveedor consultando la colección Usuarios
       final userDoc =
-          await FirebaseFirestore.instance
-              .collection('Usuarios')
-              .doc(uid)
-              .get();
+          await FirebaseFirestore.instance.collection('Usuarios').doc(uid).get();
 
       if (!userDoc.exists) {
         print('Usuario no encontrado en la colección Usuarios');
@@ -120,11 +122,10 @@ class _PaginaPerfilProveedorState extends State<PaginaPerfilProveedor> {
       setState(() {
         isProveedor = true;
         userData = userDataFromUsuarios; // Usar datos de Usuarios directamente
+        _imageUrl = userData?['imagen'];
         isLoading = false;
       });
-      print(
-        'Datos del usuario cargados desde Usuarios: $userData',
-      ); // Depuración
+      print('Datos del usuario cargados desde Usuarios: $userData'); // Depuración
     } catch (e) {
       print('Error al obtener datos: $e');
       setState(() {
@@ -144,21 +145,57 @@ class _PaginaPerfilProveedorState extends State<PaginaPerfilProveedor> {
       if (user == null) return;
 
       final userDoc =
-          await FirebaseFirestore.instance
-              .collection('Usuarios')
-              .doc(user.uid)
-              .get();
+          await FirebaseFirestore.instance.collection('Usuarios').doc(user.uid).get();
 
       if (userDoc.exists) {
         setState(() {
           userData = userDoc.data();
+          _imageUrl = userData?['imagen'];
         });
-        print(
-          'Datos recargados desde Firestore (Usuarios): $userData',
-        ); // Depuración
+        print('Datos recargados desde Firestore (Usuarios): $userData'); // Depuración
       }
     } catch (e) {
       print('Error al recargar datos desde Firestore: $e');
+    }
+  }
+
+  Future<void> _subirImagen() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        // Subir imagen a Cloudinary
+        final url = Uri.parse(
+            'https://api.cloudinary.com/v1_1/dzmcnktot/image/upload?api_key=YOUR_API_KEY');
+        final request = http.MultipartRequest('POST', url)
+          ..fields['upload_preset'] = 'Rental'
+          ..files.add(await http.MultipartFile.fromPath('file', pickedFile.path));
+
+        final response = await request.send();
+        if (response.statusCode == 200) {
+          final responseData = await http.Response.fromStream(response);
+          final jsonData = json.decode(responseData.body);
+          final imageUrl = jsonData['secure_url'];
+
+          // Guardar URL en Firestore
+          await FirebaseFirestore.instance
+              .collection('Usuarios')
+              .doc(user.uid)
+              .update({'imagen': imageUrl});
+
+          setState(() {
+            _imageUrl = imageUrl;
+            userData?['imagen'] = _imageUrl;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Imagen subida correctamente')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Error al subir la imagen')),
+          );
+        }
+      }
     }
   }
 
@@ -170,149 +207,201 @@ class _PaginaPerfilProveedorState extends State<PaginaPerfilProveedor> {
     String? ciudad = userData?['ciudad'];
     String? correo = userData?['correo'];
     String? direccion = userData?['direccion'];
-    String? fechaNacimiento = userData?['fechaNacimiento'];
-    String? proposito = userData?['proposito'];
+    bool showPasswordFields = false; // Estado para mostrar campos de contraseña
 
     return showDialog<void>(
       context: context,
-      builder: (BuildContext context) {
-        final TextEditingController nombreController = TextEditingController(
-          text: nombre,
-        );
-        final TextEditingController telefonoController = TextEditingController(
-          text: telefono,
-        );
-        final TextEditingController barrioController = TextEditingController(
-          text: barrio,
-        );
-        final TextEditingController ciudadController = TextEditingController(
-          text: ciudad,
-        );
-        final TextEditingController correoController = TextEditingController(
-          text: correo,
-        );
-        final TextEditingController direccionController = TextEditingController(
-          text: direccion,
-        );
-        final TextEditingController fechaNacimientoController =
-            TextEditingController(text: fechaNacimiento);
-        final TextEditingController propositoController = TextEditingController(
-          text: proposito,
-        );
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setDialogState) {
+            final TextEditingController nombreController = TextEditingController(
+              text: nombre ?? '',
+            );
+            final TextEditingController telefonoController = TextEditingController(
+              text: telefono ?? '',
+            );
+            final TextEditingController barrioController = TextEditingController(
+              text: barrio ?? '',
+            );
+            final TextEditingController ciudadController = TextEditingController(
+              text: ciudad ?? '',
+            );
+            final TextEditingController correoController = TextEditingController(
+              text: correo ?? FirebaseAuth.instance.currentUser?.email ?? '',
+            );
+            final TextEditingController direccionController = TextEditingController(
+              text: direccion ?? '',
+            );
+            final TextEditingController currentPasswordController = TextEditingController();
+            final TextEditingController newPasswordController = TextEditingController();
 
-        return AlertDialog(
-          title: const Text('Editar Datos'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: nombreController,
-                  decoration: const InputDecoration(labelText: 'Nombre'),
-                ),
-                TextFormField(
-                  controller: telefonoController,
-                  decoration: const InputDecoration(labelText: 'Teléfono'),
-                ),
-                TextFormField(
-                  controller: barrioController,
-                  decoration: const InputDecoration(labelText: 'Barrio'),
-                ),
-                TextFormField(
-                  controller: ciudadController,
-                  decoration: const InputDecoration(labelText: 'Ciudad'),
-                ),
-                TextFormField(
-                  controller: correoController,
-                  decoration: const InputDecoration(labelText: 'Correo'),
-                ),
-                TextFormField(
-                  controller: direccionController,
-                  decoration: const InputDecoration(labelText: 'Dirección'),
-                ),
-                TextFormField(
-                  controller: fechaNacimientoController,
-                  decoration: const InputDecoration(
-                    labelText: 'Fecha Nacimiento',
-                  ),
-                ),
-                TextFormField(
-                  controller: propositoController,
-                  decoration: const InputDecoration(labelText: 'Propósito'),
-                  enabled: false, // Propósito no editable
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              child: const Text('Cancelar'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            ElevatedButton(
-              child: const Text('Guardar'),
-              onPressed: () async {
-                try {
-                  final user = FirebaseAuth.instance.currentUser;
-                  if (user == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Error: Debes iniciar sesión.'),
+            return AlertDialog(
+              title: const Text('Editar Datos'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: nombreController,
+                      decoration: const InputDecoration(labelText: 'Nombre'),
+                    ),
+                    TextFormField(
+                      controller: telefonoController,
+                      decoration: const InputDecoration(labelText: 'Teléfono'),
+                    ),
+                    TextFormField(
+                      controller: barrioController,
+                      decoration: const InputDecoration(labelText: 'Barrio'),
+                    ),
+                    TextFormField(
+                      controller: ciudadController,
+                      decoration: const InputDecoration(labelText: 'Ciudad'),
+                    ),
+                    TextFormField(
+                      controller: correoController,
+                      decoration: const InputDecoration(labelText: 'Correo'),
+                      enabled: false, // Deshabilitar edición
+                    ),
+                    TextFormField(
+                      controller: direccionController,
+                      decoration: const InputDecoration(labelText: 'Dirección'),
+                    ),
+                    const SizedBox(height: 10),
+                    ElevatedButton(
+                      onPressed: () {
+                        setDialogState(() {
+                          showPasswordFields = !showPasswordFields;
+                        });
+                      },
+                      child: Text(showPasswordFields ? 'Ocultar Cambio de Contraseña' : 'Cambiar Contraseña'),
+                    ),
+                    if (showPasswordFields) ...[
+                      TextFormField(
+                        controller: currentPasswordController,
+                        decoration: const InputDecoration(labelText: 'Contraseña Actual'),
+                        obscureText: true,
                       ),
-                    );
-                    return;
-                  }
+                      TextFormField(
+                        controller: newPasswordController,
+                        decoration: const InputDecoration(labelText: 'Nueva Contraseña'),
+                        obscureText: true,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  child: const Text('Cancelar'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+                ElevatedButton(
+                  child: const Text('Guardar'),
+                  onPressed: () async {
+                    try {
+                      final user = FirebaseAuth.instance.currentUser;
+                      if (user == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Error: Debes iniciar sesión.'),
+                          ),
+                        );
+                        return;
+                      }
 
-                  // Guardar los datos en la colección Usuarios
-                  await FirebaseFirestore.instance
-                      .collection('Usuarios')
-                      .doc(user.uid)
-                      .set({
+                      String? newPasswordToSave;
+
+                      // Verificar si la contraseña cambió (solo si los campos están visibles)
+                      final currentPassword = currentPasswordController.text.trim();
+                      final newPassword = newPasswordController.text.trim();
+                      if (showPasswordFields && newPassword.isNotEmpty) {
+                        if (currentPassword.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Por favor, ingresa la contraseña actual.')),
+                          );
+                          return;
+                        }
+                        // Validar la nueva contraseña (mínimo 6 caracteres, requerido por Firebase)
+                        if (newPassword.length < 6) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('La nueva contraseña debe tener al menos 6 caracteres.')),
+                          );
+                          return;
+                        }
+                        // Actualizar la contraseña en FirebaseAuth
+                        await user.updatePassword(newPassword);
+                        newPasswordToSave = newPassword; // Guardar para Firestore
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Contraseña actualizada correctamente.')),
+                        );
+                      }
+
+                      // Guardar los datos en la colección Usuarios
+                      final updatedData = {
                         'nombre': nombreController.text,
                         'telefono': telefonoController.text,
                         'barrio': barrioController.text,
                         'ciudad': ciudadController.text,
-                        'correo': correoController.text,
+                        'correo': user.email, // Usar el correo actual del usuario
                         'direccion': direccionController.text,
-                        'fechaNacimiento': fechaNacimientoController.text,
-                        'proposito': propositoController.text,
-                      }, SetOptions(merge: true));
+                        'imagen': _imageUrl,
+                      };
 
-                  // Actualizar el estado local
-                  setState(() {
-                    userData?['nombre'] = nombreController.text;
-                    userData?['telefono'] = telefonoController.text;
-                    userData?['barrio'] = barrioController.text;
-                    userData?['ciudad'] = ciudadController.text;
-                    userData?['correo'] = correoController.text;
-                    userData?['direccion'] = direccionController.text;
-                    userData?['fechaNacimiento'] =
-                        fechaNacimientoController.text;
-                    userData?['proposito'] = propositoController.text;
-                  });
+                      // Solo agregar el campo password si se cambió la contraseña
+                      if (newPasswordToSave != null) {
+                        updatedData['password'] = newPasswordToSave;
+                      }
 
-                  // Depuración: Verificar que userData se actualizó
-                  print('userData actualizado localmente: $userData');
+                      await FirebaseFirestore.instance
+                          .collection('Usuarios')
+                          .doc(user.uid)
+                          .set(updatedData, SetOptions(merge: true));
 
-                  // Recargar datos desde Firestore para confirmar
-                  await _recargarDatosDesdeFirestore();
+                      // Actualizar el estado local
+                      setState(() {
+                        userData?['nombre'] = nombreController.text;
+                        userData?['telefono'] = telefonoController.text;
+                        userData?['barrio'] = barrioController.text;
+                        userData?['ciudad'] = ciudadController.text;
+                        userData?['correo'] = user.email; // Usar el correo actual
+                        userData?['direccion'] = direccionController.text;
+                        userData?['imagen'] = _imageUrl;
+                        if (newPasswordToSave != null) {
+                          userData?['password'] = newPasswordToSave;
+                        }
+                      });
 
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Datos actualizados correctamente'),
-                    ),
-                  );
-                  Navigator.of(context).pop();
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error al actualizar datos: $e')),
-                  );
-                }
-              },
-            ),
-          ],
+                      // Depuración: Verificar que userData se actualizó
+                      print('userData actualizado localmente: $userData');
+
+                      // Recargar datos desde Firestore para confirmar
+                      await _recargarDatosDesdeFirestore();
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Datos actualizados correctamente'),
+                        ),
+                      );
+                      Navigator.of(context).pop();
+                    } on FirebaseException catch (e) {
+                      print('Error al interactuar con Firestore: ${e.code} - ${e.message}');
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error al actualizar datos en Firestore: ${e.message}')),
+                      );
+                    } catch (e) {
+                      print('Error inesperado al actualizar datos: $e');
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error inesperado al actualizar datos: $e')),
+                      );
+                    }
+                  },
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -320,49 +409,71 @@ class _PaginaPerfilProveedorState extends State<PaginaPerfilProveedor> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body:
-          isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : !isProveedor
-              ? const Center(child: Text('Acceso denegado.'))
-              : SingleChildScrollView(
+    return isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : !isProveedor
+            ? const Center(child: Text('Acceso denegado.'))
+            : SingleChildScrollView(
                 child: Column(
                   children: [
                     Stack(
                       children: [
                         Container(
-                          height: 200,
+                          height: MediaQuery.of(context).size.height * 0.25 + kToolbarHeight, // Mismo tamaño que antes
                           decoration: const BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [Color(0xFF4B4EAB), Color(0xFF8B5CF6)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
+                            image: DecorationImage(
+                              image: NetworkImage(
+                                'https://sdmntprwestus.oaiusercontent.com/files/00000000-f37c-6230-b61d-5e0671390ff8/raw?se=2025-06-01T01%3A48%3A13Z&sp=r&sv=2024-08-04&sr=b&scid=3f75e862-f7fa-5734-b72b-683ed88eefd3&skoid=add8ee7d-5fc7-451e-b06e-a82b2276cf62&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2025-05-31T21%3A47%3A52Z&ske=2025-06-01T21%3A47%3A52Z&sks=b&skv=2024-08-04&sig=dHaEgfJ/%2BBe6rAvdtwNgmeITbrqW9mlwIDXLfa1jAG0%3D',
+                              ),
+                              fit: BoxFit.cover, // Ajustar la imagen para que cubra el área
                             ),
                           ),
                         ),
                         Positioned(
-                          top: 120,
+                          top: MediaQuery.of(context).size.height * 0.125, // Ajuste para alinear con la mitad de la nueva altura
                           left: 0,
                           right: 0,
                           child: Center(
-                            child: CircleAvatar(
-                              radius: 50,
-                              backgroundColor: Colors.white,
-                              child: CircleAvatar(
-                                radius: 47,
-                                child: Icon(
-                                  Icons.person,
-                                  size: 50,
-                                  color: Colors.grey[700],
-                                ),
+                            child: GestureDetector(
+                              onTap: _subirImagen,
+                              child: Stack(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 50,
+                                    backgroundColor: Colors.white,
+                                    child: CircleAvatar(
+                                      radius: 47,
+                                      backgroundImage: _imageUrl != null ? NetworkImage(_imageUrl!) : null,
+                                      child: _imageUrl == null
+                                          ? Icon(
+                                              Icons.person,
+                                              size: 50,
+                                              color: Colors.grey[700],
+                                            )
+                                          : null,
+                                    ),
+                                  ),
+                                  Positioned(
+                                    bottom: 0,
+                                    right: 0,
+                                    child: CircleAvatar(
+                                      radius: 15,
+                                      backgroundColor: Colors.white,
+                                      child: Icon(
+                                        Icons.camera_alt,
+                                        size: 20,
+                                        color: Colors.grey[700],
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 60),
+                    const SizedBox(height: 10), // Espacio antes del nombre
                     Text(
                       userData?['nombre'] ?? '',
                       style: const TextStyle(
@@ -375,11 +486,9 @@ class _PaginaPerfilProveedorState extends State<PaginaPerfilProveedor> {
                     infoItem("Nombre", userData?['nombre']),
                     infoItem("Correo", userData?['correo']),
                     infoItem("Teléfono", userData?['telefono']),
-                    infoItem("Fecha Nac", userData?['fechaNacimiento']),
                     infoItem("Dirección", userData?['direccion']),
                     infoItem("Barrio", userData?['barrio']),
                     infoItem("Ciudad", userData?['ciudad']),
-                    infoItem("Propósito", userData?['proposito']),
                     const SizedBox(height: 15),
                     Center(
                       child: SizedBox(
@@ -447,7 +556,7 @@ class _PaginaPerfilProveedorState extends State<PaginaPerfilProveedor> {
                         );
                       },
                     ),
-                    // Botón de cerrar sesión con texto negro
+                    // Botón de cerrar sesión con texto negro y alerta de confirmación
                     ListTile(
                       leading: const Icon(
                         Icons.logout,
@@ -458,22 +567,48 @@ class _PaginaPerfilProveedorState extends State<PaginaPerfilProveedor> {
                         style: TextStyle(color: Colors.black),
                       ),
                       trailing: const Icon(Icons.keyboard_arrow_right),
-                      onTap: () {
-                        FirebaseAuth.instance.signOut();
-                        Navigator.pushAndRemoveUntil(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const LoginPage(),
+                      onTap: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Center(
+                              child: Text(
+                                'Confirmar',
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            content: const Text('¿Estás seguro de cerrar sesión?'),
+                            actions: [
+                              TextButton(
+                                child: const Text('Cancelar'),
+                                onPressed: () => Navigator.of(context).pop(false),
+                              ),
+                              TextButton(
+                                child: const Text('Sí'),
+                                onPressed: () => Navigator.of(context).pop(true),
+                              ),
+                            ],
                           ),
-                          (Route<dynamic> route) => false,
                         );
+                        if (confirm == true) {
+                          await FirebaseAuth.instance.signOut();
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const LoginPage(),
+                            ),
+                            (Route<dynamic> route) => false,
+                          );
+                        }
                       },
                     ),
                     const SizedBox(height: 30),
                   ],
                 ),
-              ),
-    );
+              );
   }
 
   Widget sectionTitle(String title) {

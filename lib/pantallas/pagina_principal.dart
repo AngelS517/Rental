@@ -33,165 +33,113 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
   }
 
   Widget _buildPaginaPrincipal() {
-    return Column(
-      children: [
-        // Parte superior con gradiente extendido hasta la barra de estado
-        Container(
-          width: double.infinity,
-          height:
-              MediaQuery.of(context).padding.top +
-              80, // Ajustar para incluir la barra de estado
-          padding: EdgeInsets.only(
-            top:
-                MediaQuery.of(context).padding.top, // Espacio para la barra de estado
-            left: 16,
-            right: 16,
-            bottom: 20,
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 20),
+          const Text(
+            'Categorías',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF7b43cd), Color(0xFF2575FC)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Container(
-              width: 45,
-              height: 45,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
+          const SizedBox(height: 10),
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            childAspectRatio: 1.2,
+            children: [
+              categoriaItem(
+                context,
+                'imagenes/auto.png',
+                'Automóvil',
+                'Automovil',
               ),
-              child: ClipOval(
-                child: Image.asset(
-                  'imagenes/logorental.png',
-                  width: 40,
-                  height: 40,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Icon(
-                      Icons.person,
-                      size: 40,
-                      color: Colors.grey,
-                    );
-                  },
-                ),
+              categoriaItem(
+                context,
+                'imagenes/minivan.png',
+                'Minivan',
+                'Minivan',
               ),
-            ),
+              categoriaItem(
+                context,
+                'imagenes/moto.png',
+                'Moto',
+                'Moto',
+              ),
+              categoriaItem(
+                context,
+                'imagenes/electricos.png',
+                'Electricos',
+                'Electrico',
+              ),
+            ],
           ),
-        ),
-
-        // Contenido desplazable
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 20),
-                const Text(
-                  'Categorías',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 10),
-                GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 10,
-                  crossAxisSpacing: 10,
-                  childAspectRatio: 1.2,
-                  children: [
-                    categoriaItem(
-                      context,
-                      'imagenes/auto.png',
-                      'Automóvil',
-                      'Automovil',
-                    ),
-                    categoriaItem(
-                      context,
-                      'imagenes/minivan.png',
-                      'Minivan',
-                      'Minivan',
-                    ),
-                    categoriaItem(
-                      context,
-                      'imagenes/moto.png',
-                      'Moto',
-                      'Moto',
-                    ),
-                    categoriaItem(
-                      context,
-                      'imagenes/electricos.png',
-                      'Electricos',
-                      'Electrico',
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                const SizedBox(height: 20),
-                const Text(
-                  'Ofertas',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 10),
-                StreamBuilder(
-                  stream:
-                      FirebaseFirestore.instance
-                          .collection('Vehiculos')
-                          .where('precioPorDia', isLessThan: 26000)
-                          .snapshots(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                      return const Text('No hay vehículos en oferta');
-                    }
-
-                    final vehiculos = snapshot.data!.docs;
-
-                    return ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: vehiculos.length,
-                      itemBuilder: (context, index) {
-                        final v = vehiculos[index];
-                        // Manejo más seguro de los campos para evitar errores
-                        final modelo = v['modelo'] != null
-                            ? v['modelo'].toString()
-                            : 'Modelo desconocido';
-                        final propietario = v['Propietario']?.toString() ?? 'Sin propietario';
-                        final precio = v['precioPorDia'] != null
-                            ? (v['precioPorDia'] is num
-                                ? (v['precioPorDia'] as num).toDouble()
-                                : 0.0)
-                            : 0.0;
-                        final imagenUrl = v.data().containsKey('imagen')
-                            ? v['imagen'].toString()
-                            : '';
-                        final marca = v.data().containsKey('marca')
-                            ? v['marca'].toString()
-                            : 'Marca desconocida';
-
-                        return ofertaItemFirestore(
-                          propietario,
-                          modelo,
-                          precio,
-                          imagenUrl,
-                          marca,
-                        );
-                      },
-                    );
-                  },
-                ),
-              ],
-            ),
+          const SizedBox(height: 20),
+          const SizedBox(height: 20),
+          const Text(
+            'Ofertas',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
-        ),
-      ],
+          const SizedBox(height: 10),
+          StreamBuilder(
+            stream:
+                FirebaseFirestore.instance
+                    .collection('Vehiculos')
+                    .where('precioPorDia', isLessThan: 26000)
+                    .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                return const Text('No hay vehículos en oferta');
+              }
+
+              final vehiculos = snapshot.data!.docs;
+
+              return ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: vehiculos.length,
+                itemBuilder: (context, index) {
+                  final v = vehiculos[index];
+                  final modelo = v['modelo'] != null
+                      ? v['modelo'].toString()
+                      : 'Modelo desconocido';
+                  final propietario = v['Propietario']?.toString() ?? 'Sin propietario';
+                  final precio = v['precioPorDia'] != null
+                      ? (v['precioPorDia'] is num
+                          ? (v['precioPorDia'] as num).toDouble()
+                          : 0.0)
+                      : 0.0;
+                  final imagenUrl = v.data().containsKey('imagen')
+                      ? v['imagen'].toString()
+                      : '';
+                  final marca = v.data().containsKey('marca')
+                      ? v['marca'].toString()
+                      : 'Marca desconocida';
+                  final placa = v.data().containsKey('placa')
+                      ? v['placa'].toString()
+                      : 'Sin placa';
+
+                  return ofertaItemFirestore(
+                    propietario,
+                    modelo,
+                    precio,
+                    imagenUrl,
+                    marca,
+                    placa,
+                  );
+                },
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 
@@ -203,7 +151,6 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
   ) {
     return GestureDetector(
       onTap: () {
-        // Usar Navigator.pushNamed y pasar la categoría como argumento
         Navigator.pushNamed(
           context,
           '/vehiculos',
@@ -241,11 +188,8 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
     );
   }
 
-  Widget ofertaItemFirestore(String propietario, String modelo, double precio, String imagenUrl, String marca) {
-    // Validar si el URL es potencialmente válido (comienza con http o https)
+  Widget ofertaItemFirestore(String propietario, String modelo, double precio, String imagenUrl, String marca, String placa) {
     final bool isValidUrl = imagenUrl.isNotEmpty && (imagenUrl.startsWith('http://') || imagenUrl.startsWith('https://'));
-
-    // Quitar el año de 'modelo' (asumiendo que el año es la última palabra después de un espacio)
     final modeloSinAnio = modelo.contains(' ')
         ? modelo.substring(0, modelo.lastIndexOf(' '))
         : modelo;
@@ -253,38 +197,94 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      child: ListTile(
-        leading: isValidUrl
-            ? Image.network(
-                imagenUrl,
-                width: 50,
-                height: 50,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return const Icon(Icons.directions_car, size: 50, color: Colors.blue);
-                },
-              )
-            : const Icon(Icons.directions_car, size: 50, color: Colors.blue),
-        title: Text(
-          '$marca $modeloSinAnio', // Mostrar la marca y el modelo sin el año
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Text('Propietario: $propietario'),
-        trailing: Text(
-          '\$${precio.toStringAsFixed(2)}',
-          style: const TextStyle(
-            color: Colors.orange,
-            fontWeight: FontWeight.bold,
+      child: Column(
+        children: [
+          ListTile(
+            leading: isValidUrl
+                ? Image.network(
+                    imagenUrl,
+                    width: 50,
+                    height: 50,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(Icons.directions_car, size: 50, color: Colors.blue);
+                    },
+                  )
+                : const Icon(Icons.directions_car, size: 50, color: Colors.blue),
+            title: Text(
+              '$marca $modeloSinAnio',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            subtitle: Text('Propietario: $propietario'),
+            trailing: Text(
+              '\$${precio.toStringAsFixed(2)}',
+              style: const TextStyle(
+                color: Colors.orange,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
-        ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ElevatedButton(
+              onPressed: () {
+                print('Navegando a /descripcion con placa: $placa');
+                Navigator.pushNamed(
+                  context,
+                  '/descripcion',
+                  arguments: {'placa': placa},
+                ).then((value) => print('Regresó de /descripcion'));
+              },
+              child: const Text('Ver más'),
+            ),
+          ),
+        ],
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final Map<int, String> titles = {
+      0: 'Página Principal - Cliente',
+      1: 'Mapa',
+      2: 'Favoritos',
+      3: 'Mi Perfil'
+    };
+
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: AppBar(
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: CircleAvatar(
+            radius: 20,
+            backgroundColor: Colors.white,
+            child: Image.asset(
+              'imagenes/logorental.png',
+              height: 36,
+            ),
+          ),
+        ),
+        title: Text(
+          titles[_selectedIndex]!,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+          ),
+        ),
+        centerTitle: true,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF071082), Color(0xFF7b43cd)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        elevation: 0,
+      ),
       body: IndexedStack(
         index: _selectedIndex,
         children: [

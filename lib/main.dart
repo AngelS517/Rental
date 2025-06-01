@@ -10,8 +10,7 @@ import 'pantallas/pagina_favoritos.dart';
 import 'pantallas/pagina_automoviles.dart';
 import 'pantallas/mapa_automovil.dart';
 import 'pantallas/pagina_principal_provee.dart';
-
-
+import 'pantallas/pagina_descripcion_vehiculo.dart'; // Añadida para la redirección
 
 // Importación de Mapbox
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
@@ -39,17 +38,26 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Rental App',
       theme: ThemeData(primarySwatch: Colors.blue),
-      initialRoute: '/login',
+      initialRoute: '/login', // cambiar para solo cambiar la animacion
       routes: {
         '/login': (context) => const LoginPage(),
-        '/inicio': (context) => const PaginaPrincipal(),
+        '/principal': (context) => const PaginaPrincipal(),
         '/mapa': (context) => const PaginaMapa(),
         '/favoritos': (context) => const PaginaFavoritos(),
         '/perfil': (context) => const PaginaPerfilCliente(),
         '/vehiculos': (context) => const PaginaVehiculos(),
         '/mapa_automovil': (context) => const MapaAutomovil(),
         '/proveedor': (context) => const PaginaPrincipalProveedor(),
-
+      },
+      onGenerateRoute: (settings) {
+        if (settings.name == '/descripcion') {
+          final args = settings.arguments as Map<String, dynamic>?;
+          final placa = args?['placa']?.toString() ?? '';
+          return MaterialPageRoute(
+            builder: (context) => PaginaDescripcionVehiculo(placa: placa),
+          );
+        }
+        return null; // Dejar que las rutas definidas en routes manejen las demás
       },
     );
   }
