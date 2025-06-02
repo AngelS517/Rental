@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -21,15 +20,19 @@ class _RegistroPageState extends State<RegistroPage> {
   final direccionController = TextEditingController();
   final barrioController = TextEditingController();
   final ciudadController = TextEditingController();
+  final cedulaController = TextEditingController();
 
   String? ciudadSeleccionada;
   String? propositoSeleccionado;
   bool cargando = false;
   bool aceptaPolitica = false;
 
+  bool mostrarPassword = false;
+  bool mostrarConfirmPassword = false;
+
   bool validarPassword(String password) {
     final RegExp regex = RegExp(
-      r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#\$&*~]).{8,}$',
+      r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#\$&*~+]).{8,}$',
     );
     return regex.hasMatch(password);
   }
@@ -50,9 +53,32 @@ class _RegistroPageState extends State<RegistroPage> {
   }
 
   void mostrarMensaje(String texto) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(texto)),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(texto)));
+  }
+
+  Future<bool> esMayorDeEdad(String fechaNacimiento) async {
+    try {
+      final partes = fechaNacimiento.split('/');
+      if (partes.length != 3) return false;
+      final dia = int.parse(partes[0]);
+      final mes = int.parse(partes[1]);
+      final anio = int.parse(partes[2]);
+
+      final fechaNac = DateTime(anio, mes, dia);
+      final hoy = DateTime.now();
+
+      final edad =
+          hoy.year -
+          fechaNac.year -
+          ((hoy.month < fechaNac.month ||
+                  (hoy.month == fechaNac.month && hoy.day < fechaNac.day))
+              ? 1
+              : 0);
+
+      return edad >= 18;
+    } catch (e) {
+      return false;
+    }
   }
 
   Future<void> registrarUsuario() async {
@@ -63,10 +89,22 @@ class _RegistroPageState extends State<RegistroPage> {
     final direccion = direccionController.text.trim();
     final barrio = barrioController.text.trim();
     final ciudad = ciudadController.text.trim();
+    final cedula = cedulaController.text.trim();
     final pass = passwordController.text;
     final confirmPass = confirmPasswordController.text;
 
-    if ([nombre, correo, telefono, fechaNacimiento, direccion, barrio, ciudad, pass, confirmPass].contains('') ||
+    if ([
+          nombre,
+          correo,
+          telefono,
+          fechaNacimiento,
+          direccion,
+          barrio,
+          ciudad,
+          cedula,
+          pass,
+          confirmPass,
+        ].contains('') ||
         propositoSeleccionado == null) {
       mostrarMensaje('Por favor, completa todos los campos');
       return;
@@ -79,20 +117,29 @@ class _RegistroPageState extends State<RegistroPage> {
 
     if (!validarPassword(pass)) {
       mostrarMensaje(
-          'La contraseña debe tener al menos 8 caracteres, incluir mayúsculas, minúsculas, números y un símbolo especial.');
+        'La contraseña debe tener al menos 8 caracteres, incluir mayúsculas, minúsculas, números y un símbolo especial (puede incluir +).',
+      );
       return;
     }
 
     if (!aceptaPolitica) {
-      mostrarMensaje('Debes aceptar la política de privacidad para registrarte.');
+      mostrarMensaje(
+        'Debes aceptar la política de privacidad para registrarte.',
+      );
+      return;
+    }
+
+    bool mayorEdad = await esMayorDeEdad(fechaNacimiento);
+    if (!mayorEdad) {
+      mostrarMensaje('No se puede registrar usuario menor de 18 años.');
       return;
     }
 
     setState(() => cargando = true);
 
     try {
-      final signInMethods =
-          await FirebaseAuth.instance.fetchSignInMethodsForEmail(correo);
+      final signInMethods = await FirebaseAuth.instance
+          .fetchSignInMethodsForEmail(correo);
       if (signInMethods.isNotEmpty) {
         mostrarMensaje('El correo ya está registrado. Intenta iniciar sesión.');
         setState(() => cargando = false);
@@ -106,17 +153,18 @@ class _RegistroPageState extends State<RegistroPage> {
           .collection('Usuarios')
           .doc(cred.user!.uid)
           .set({
-        'nombre': nombre,
-        'correo': correo,
-        'telefono': telefono,
-        'fechaNacimiento': fechaNacimiento,
-        'direccion': direccion,
-        'barrio': barrio,
-        'ciudad': ciudad,
-        'proposito': propositoSeleccionado,
-        'fechaRegistro': Timestamp.now(),
-        'password': pass,
-      });
+            'nombre': nombre,
+            'correo': correo,
+            'telefono': telefono,
+            'fechaNacimiento': fechaNacimiento,
+            'direccion': direccion,
+            'barrio': barrio,
+            'ciudad': ciudad,
+            'cedula': cedula,
+            'proposito': propositoSeleccionado,
+            'fechaRegistro': Timestamp.now(),
+            'password': pass,
+          });
 
       mostrarMensaje('Registro exitoso');
       Future.delayed(const Duration(seconds: 2), () {
@@ -132,17 +180,32 @@ class _RegistroPageState extends State<RegistroPage> {
     }
   }
 
-  Widget _buildTextField(String label, TextEditingController controller,
-      {TextInputType tipo = TextInputType.text, bool esPassword = false}) {
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller, {
+    TextInputType tipo = TextInputType.text,
+    bool esPassword = false,
+    bool mostrarTexto = false,
+    VoidCallback? toggleMostrar,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(top: 10),
       child: TextField(
         controller: controller,
         keyboardType: tipo,
-        obscureText: esPassword,
+        obscureText: esPassword && !mostrarTexto,
         decoration: InputDecoration(
           labelText: label,
           border: const OutlineInputBorder(),
+          suffixIcon:
+              esPassword
+                  ? IconButton(
+                    icon: Icon(
+                      mostrarTexto ? Icons.visibility : Icons.visibility_off,
+                    ),
+                    onPressed: toggleMostrar,
+                  )
+                  : null,
         ),
       ),
     );
@@ -165,7 +228,10 @@ class _RegistroPageState extends State<RegistroPage> {
             child: SingleChildScrollView(
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 20),
-                padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 30,
+                  horizontal: 20,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.9),
                   borderRadius: BorderRadius.circular(20),
@@ -199,10 +265,21 @@ class _RegistroPageState extends State<RegistroPage> {
                     ),
                     const SizedBox(height: 20),
                     _buildTextField('Nombre completo', nombreController),
-                    _buildTextField('Correo electrónico', emailController,
-                        tipo: TextInputType.emailAddress),
-                    _buildTextField('Número telefónico', telefonoController,
-                        tipo: TextInputType.phone),
+                    _buildTextField(
+                      'Correo electrónico',
+                      emailController,
+                      tipo: TextInputType.emailAddress,
+                    ),
+                    _buildTextField(
+                      'Número telefónico',
+                      telefonoController,
+                      tipo: TextInputType.phone,
+                    ),
+                    _buildTextField(
+                      'Cédula',
+                      cedulaController,
+                      tipo: TextInputType.number,
+                    ),
                     Padding(
                       padding: const EdgeInsets.only(top: 10),
                       child: GestureDetector(
@@ -224,22 +301,43 @@ class _RegistroPageState extends State<RegistroPage> {
                     DropdownButtonFormField<String>(
                       decoration: const InputDecoration(labelText: 'Propósito'),
                       value: propositoSeleccionado,
-                      items: ['Cliente', 'Proveedor']
-                          .map((valor) => DropdownMenuItem(
-                                value: valor,
-                                child: Text(valor),
-                              ))
-                          .toList(),
+                      items:
+                          ['Cliente', 'Proveedor']
+                              .map(
+                                (valor) => DropdownMenuItem(
+                                  value: valor,
+                                  child: Text(valor),
+                                ),
+                              )
+                              .toList(),
                       onChanged: (valor) {
                         setState(() {
                           propositoSeleccionado = valor;
                         });
                       },
                     ),
-                    _buildTextField('Contraseña', passwordController,
-                        esPassword: true),
-                    _buildTextField('Confirmar contraseña', confirmPasswordController,
-                        esPassword: true),
+                    _buildTextField(
+                      'Contraseña',
+                      passwordController,
+                      esPassword: true,
+                      mostrarTexto: mostrarPassword,
+                      toggleMostrar: () {
+                        setState(() {
+                          mostrarPassword = !mostrarPassword;
+                        });
+                      },
+                    ),
+                    _buildTextField(
+                      'Confirmar contraseña',
+                      confirmPasswordController,
+                      esPassword: true,
+                      mostrarTexto: mostrarConfirmPassword,
+                      toggleMostrar: () {
+                        setState(() {
+                          mostrarConfirmPassword = !mostrarConfirmPassword;
+                        });
+                      },
+                    ),
                     const SizedBox(height: 10),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -269,38 +367,51 @@ class _RegistroPageState extends State<RegistroPage> {
                     cargando
                         ? const CircularProgressIndicator()
                         : ElevatedButton(
-                            onPressed: aceptaPolitica ? registrarUsuario : null,
-                            style: ElevatedButton.styleFrom(
-                              padding: EdgeInsets.zero, // Quitar padding para que el Ink controle el tamaño
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10)),
-                              side: const BorderSide(color: Colors.transparent),
-                              elevation: 0,
-                              foregroundColor: Colors.white,
-                              overlayColor: Colors.white.withOpacity(0.1),
+                          onPressed: aceptaPolitica ? registrarUsuario : null,
+                          style: ElevatedButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
                             ),
-                            child: Ink(
-                              decoration: BoxDecoration(
-                                color: aceptaPolitica ? null : Colors.grey,
-                                gradient: aceptaPolitica
-                                    ? const LinearGradient(
-                                        colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
+                            side: const BorderSide(color: Colors.transparent),
+                            elevation: 0,
+                            foregroundColor: Colors.white,
+                            overlayColor: Colors.white.withOpacity(0.1),
+                          ),
+                          child: Ink(
+                            decoration: BoxDecoration(
+                              color: aceptaPolitica ? null : Colors.grey,
+                              gradient:
+                                  aceptaPolitica
+                                      ? const LinearGradient(
+                                        colors: [
+                                          Color(0xFF6A11CB),
+                                          Color(0xFF2575FC),
+                                        ],
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                       )
-                                    : null,
-                                borderRadius: const BorderRadius.all(Radius.circular(10)),
+                                      : null,
+                              borderRadius: const BorderRadius.all(
+                                Radius.circular(10),
                               ),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                                alignment: Alignment.center,
-                                child: const Text(
-                                  'Registrarme',
-                                  style: TextStyle(color: Colors.white, fontSize: 16),
+                            ),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 40,
+                                vertical: 15,
+                              ),
+                              alignment: Alignment.center,
+                              child: const Text(
+                                'Registrarme',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
                                 ),
                               ),
                             ),
                           ),
+                        ),
                   ],
                 ),
               ),

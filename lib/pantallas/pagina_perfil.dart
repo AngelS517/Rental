@@ -165,10 +165,14 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
       if (user != null) {
         // Subir imagen a Cloudinary
         final url = Uri.parse(
-            'https://api.cloudinary.com/v1_1/dzmcnktot/image/upload?api_key=YOUR_API_KEY');
-        final request = http.MultipartRequest('POST', url)
-          ..fields['upload_preset'] = 'Rental'
-          ..files.add(await http.MultipartFile.fromPath('file', pickedFile.path));
+          'https://api.cloudinary.com/v1_1/dzmcnktot/image/upload?api_key=YOUR_API_KEY',
+        );
+        final request =
+            http.MultipartRequest('POST', url)
+              ..fields['upload_preset'] = 'Rental'
+              ..files.add(
+                await http.MultipartFile.fromPath('file', pickedFile.path),
+              );
 
         final response = await request.send();
         if (response.statusCode == 200) {
@@ -200,6 +204,7 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
 
   Future<void> _mostrarDialogoEditarDatos(BuildContext context) async {
     String? nombre = userData?['nombre'];
+    String? cedula = userData?['cedula'];
     String? telefono = userData?['telefono'];
     String? barrio = userData?['barrio'];
     String? ciudad = userData?['ciudad'];
@@ -213,29 +218,30 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
       builder: (BuildContext dialogContext) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setDialogState) {
-            final TextEditingController nombreController = TextEditingController(
-              text: nombre ?? '',
-            );
-            final TextEditingController telefonoController = TextEditingController(
-              text: telefono ?? '',
-            );
-            final TextEditingController barrioController = TextEditingController(
-              text: barrio ?? '',
-            );
-            final TextEditingController ciudadController = TextEditingController(
-              text: ciudad ?? '',
-            );
-            final TextEditingController correoController = TextEditingController(
-              text: correo ?? FirebaseAuth.instance.currentUser?.email ?? '',
-            );
-            final TextEditingController direccionController = TextEditingController(
-              text: direccion ?? '',
-            );
+            final TextEditingController nombreController =
+                TextEditingController(text: nombre ?? '');
+            final TextEditingController cedulaController =
+                TextEditingController(text: cedula ?? '');
+            final TextEditingController telefonoController =
+                TextEditingController(text: telefono ?? '');
+            final TextEditingController barrioController =
+                TextEditingController(text: barrio ?? '');
+            final TextEditingController ciudadController =
+                TextEditingController(text: ciudad ?? '');
+            final TextEditingController correoController =
+                TextEditingController(
+                  text:
+                      correo ?? FirebaseAuth.instance.currentUser?.email ?? '',
+                );
+            final TextEditingController direccionController =
+                TextEditingController(text: direccion ?? '');
             final TextEditingController fechaNacimientoController =
                 TextEditingController(text: fechaNacimiento ?? '');
 
-            final TextEditingController currentPasswordController = TextEditingController();
-            final TextEditingController newPasswordController = TextEditingController();
+            final TextEditingController currentPasswordController =
+                TextEditingController();
+            final TextEditingController newPasswordController =
+                TextEditingController();
 
             return AlertDialog(
               title: const Text('Editar Datos'),
@@ -246,6 +252,10 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
                     TextFormField(
                       controller: nombreController,
                       decoration: const InputDecoration(labelText: 'Nombre'),
+                    ),
+                    TextFormField(
+                      controller: cedulaController,
+                      decoration: const InputDecoration(labelText: 'Cedula'),
                     ),
                     TextFormField(
                       controller: telefonoController,
@@ -281,17 +291,25 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
                           showPasswordFields = !showPasswordFields;
                         });
                       },
-                      child: Text(showPasswordFields ? 'Ocultar Cambio de Contraseña' : 'Cambiar Contraseña'),
+                      child: Text(
+                        showPasswordFields
+                            ? 'Ocultar Cambio de Contraseña'
+                            : 'Cambiar Contraseña',
+                      ),
                     ),
                     if (showPasswordFields) ...[
                       TextFormField(
                         controller: currentPasswordController,
-                        decoration: const InputDecoration(labelText: 'Contraseña Actual'),
+                        decoration: const InputDecoration(
+                          labelText: 'Contraseña Actual',
+                        ),
                         obscureText: true,
                       ),
                       TextFormField(
                         controller: newPasswordController,
-                        decoration: const InputDecoration(labelText: 'Nueva Contraseña'),
+                        decoration: const InputDecoration(
+                          labelText: 'Nueva Contraseña',
+                        ),
                         obscureText: true,
                       ),
                     ],
@@ -322,12 +340,17 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
                       String? newPasswordToSave;
 
                       // Verificar si la contraseña cambió (solo si los campos están visibles)
-                      final currentPassword = currentPasswordController.text.trim();
+                      final currentPassword =
+                          currentPasswordController.text.trim();
                       final newPassword = newPasswordController.text.trim();
                       if (showPasswordFields && newPassword.isNotEmpty) {
                         if (currentPassword.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Por favor, ingresa la contraseña actual.')),
+                            const SnackBar(
+                              content: Text(
+                                'Por favor, ingresa la contraseña actual.',
+                              ),
+                            ),
                           );
                           return;
                         }
@@ -335,25 +358,35 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
                         if (newPassword.length < 6) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                                content: Text('La nueva contraseña debe tener al menos 6 caracteres.')),
+                              content: Text(
+                                'La nueva contraseña debe tener al menos 6 caracteres.',
+                              ),
+                            ),
                           );
                           return;
                         }
                         // Actualizar la contraseña en FirebaseAuth
                         await user.updatePassword(newPassword);
-                        newPasswordToSave = newPassword; // Guardar para Firestore
+                        newPasswordToSave =
+                            newPassword; // Guardar para Firestore
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Contraseña actualizada correctamente.')),
+                          const SnackBar(
+                            content: Text(
+                              'Contraseña actualizada correctamente.',
+                            ),
+                          ),
                         );
                       }
 
                       // Guardar los datos en la colección Usuarios
                       final updatedData = {
                         'nombre': nombreController.text,
+                        'cedula': cedulaController.text,
                         'telefono': telefonoController.text,
                         'barrio': barrioController.text,
                         'ciudad': ciudadController.text,
-                        'correo': user.email, // Usar el correo actual del usuario
+                        'correo':
+                            user.email, // Usar el correo actual del usuario
                         'direccion': direccionController.text,
                         'fechaNacimiento': fechaNacimientoController.text,
                         'imagen': _imageUrl,
@@ -372,12 +405,15 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
                       // Actualizar el estado local
                       setState(() {
                         userData?['nombre'] = nombreController.text;
+                        userData?['cedula'] = cedulaController.text;
                         userData?['telefono'] = telefonoController.text;
                         userData?['barrio'] = barrioController.text;
                         userData?['ciudad'] = ciudadController.text;
-                        userData?['correo'] = user.email; // Usar el correo actual
+                        userData?['correo'] =
+                            user.email; // Usar el correo actual
                         userData?['direccion'] = direccionController.text;
-                        userData?['fechaNacimiento'] = fechaNacimientoController.text;
+                        userData?['fechaNacimiento'] =
+                            fechaNacimientoController.text;
                         userData?['imagen'] = _imageUrl;
                         if (newPasswordToSave != null) {
                           userData?['password'] = newPasswordToSave;
@@ -397,14 +433,24 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
                       );
                       Navigator.of(context).pop();
                     } on FirebaseException catch (e) {
-                      print('Error al interactuar con Firestore: ${e.code} - ${e.message}');
+                      print(
+                        'Error al interactuar con Firestore: ${e.code} - ${e.message}',
+                      );
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Error al actualizar datos en Firestore: ${e.message}')),
+                        SnackBar(
+                          content: Text(
+                            'Error al actualizar datos en Firestore: ${e.message}',
+                          ),
+                        ),
                       );
                     } catch (e) {
                       print('Error inesperado al actualizar datos: $e');
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Error inesperado al actualizar datos: $e')),
+                        SnackBar(
+                          content: Text(
+                            'Error inesperado al actualizar datos: $e',
+                          ),
+                        ),
                       );
                     }
                   },
@@ -422,187 +468,230 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
     return isLoading
         ? const Center(child: CircularProgressIndicator())
         : !isCliente
-            ? const Center(child: Text('Acceso denegado.'))
-            : SingleChildScrollView(
-                child: Column(
-                  children: [
-                    Stack(
-                      children: [
-                        Container(
-                          height: MediaQuery.of(context).size.height * 0.25 + kToolbarHeight,
-                          decoration: const BoxDecoration(
-                            image: DecorationImage(
-                              image: NetworkImage(
-                                'https://sdmntprwestus.oaiusercontent.com/files/00000000-f37c-6230-b61d-5e0671390ff8/raw?se=2025-06-01T01%3A48%3A13Z&sp=r&sv=2024-08-04&sr=b&scid=3f75e862-f7fa-5734-b72b-683ed88eefd3&skoid=add8ee7d-5fc7-451e-b06e-a82b2276cf62&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2025-05-31T21%3A47%3A52Z&ske=2025-06-01T21%3A47%3A52Z&sks=b&skv=2024-08-04&sig=dHaEgfJ/%2BBe6rAvdtwNgmeITbrqW9mlwIDXLfa1jAG0%3D',
-                              ),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
+        ? const Center(child: Text('Acceso denegado.'))
+        : SingleChildScrollView(
+          child: Column(
+            children: [
+              Stack(
+                children: [
+                  Container(
+                    height:
+                        MediaQuery.of(context).size.height * 0.25 +
+                        kToolbarHeight,
+                    decoration: const BoxDecoration(
+                      image: DecorationImage(
+                        image: NetworkImage(
+                          'https://sdmntprwestus.oaiusercontent.com/files/00000000-f37c-6230-b61d-5e0671390ff8/raw?se=2025-06-01T01%3A48%3A13Z&sp=r&sv=2024-08-04&sr=b&scid=3f75e862-f7fa-5734-b72b-683ed88eefd3&skoid=add8ee7d-5fc7-451e-b06e-a82b2276cf62&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2025-05-31T21%3A47%3A52Z&ske=2025-06-01T21%3A47%3A52Z&sks=b&skv=2024-08-04&sig=dHaEgfJ/%2BBe6rAvdtwNgmeITbrqW9mlwIDXLfa1jAG0%3D',
                         ),
-                        Positioned(
-                          top: MediaQuery.of(context).size.height * 0.125,
-                          left: 0,
-                          right: 0,
-                          child: Center(
-                            child: GestureDetector(
-                              onTap: _subirImagen,
-                              child: Stack(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 50,
-                                    backgroundColor: Colors.white,
-                                    child: CircleAvatar(
-                                      radius: 47,
-                                      backgroundImage: _imageUrl != null ? NetworkImage(_imageUrl!) : null,
-                                      child: _imageUrl == null
-                                          ? Icon(
-                                              Icons.person,
-                                              size: 50,
-                                              color: Colors.grey[700],
-                                            )
-                                          : null,
-                                    ),
-                                  ),
-                                  Positioned(
-                                    bottom: 0,
-                                    right: 0,
-                                    child: CircleAvatar(
-                                      radius: 15,
-                                      backgroundColor: Colors.white,
-                                      child: Icon(
-                                        Icons.camera_alt,
-                                        size: 20,
-                                        color: Colors.grey[700],
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      userData?['nombre'] ?? '',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
+                        fit: BoxFit.cover,
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    sectionTitle("Información Personal"),
-                    infoItem("Nombre", userData?['nombre']),
-                    infoItem("Correo", userData?['correo']),
-                    infoItem("Teléfono", userData?['telefono']),
-                    infoItem("Fecha Nac", userData?['fechaNacimiento']),
-                    infoItem("Dirección", userData?['direccion']),
-                    infoItem("Barrio", userData?['barrio']),
-                    infoItem("Ciudad", userData?['ciudad']),
-                    const SizedBox(height: 15),
-                    Center(
-                      child: SizedBox(
-                        width: 200,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            _mostrarDialogoEditarDatos(context);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.transparent,
-                            padding: const EdgeInsets.all(0),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          child: Ink(
-                            decoration: const BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [Color(0xFF7b43cd), Color(0xFF2575FC)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
+                  ),
+                  Positioned(
+                    top: MediaQuery.of(context).size.height * 0.125,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: GestureDetector(
+                        onTap: _subirImagen,
+                        child: Stack(
+                          children: [
+                            CircleAvatar(
+                              radius: 50,
+                              backgroundColor: Colors.white,
+                              child: CircleAvatar(
+                                radius: 47,
+                                backgroundImage:
+                                    _imageUrl != null
+                                        ? NetworkImage(_imageUrl!)
+                                        : null,
+                                child:
+                                    _imageUrl == null
+                                        ? Icon(
+                                          Icons.person,
+                                          size: 50,
+                                          color: Colors.grey[700],
+                                        )
+                                        : null,
                               ),
-                              borderRadius: BorderRadius.all(Radius.circular(10)),
                             ),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 12,
-                                horizontal: 20,
-                              ),
-                              alignment: Alignment.center,
-                              child: const Text(
-                                "Editar datos",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: CircleAvatar(
+                                radius: 15,
+                                backgroundColor: Colors.white,
+                                child: Icon(
+                                  Icons.camera_alt,
+                                  size: 20,
+                                  color: Colors.grey[700],
                                 ),
                               ),
                             ),
-                          ),
+                          ],
                         ),
                       ),
                     ),
-                    const SizedBox(height: 30),
-                    listTileItem(Icons.history, "Historial"),
-                    ListTile(
-                      leading: const Icon(Icons.description, color: Color(0xFF4B4EAB)),
-                      title: const Text("Términos y condiciones"),
-                      trailing: const Icon(Icons.keyboard_arrow_right),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => PaginaTerminos()),
-                        );
-                      },
-                    ),
-                    ListTile(
-                      leading: const Icon(Icons.logout, color: Color(0xFF4B4EAB)),
-                      title: const Text(
-                        "Cerrar sesión",
-                        style: TextStyle(color: Colors.black),
-                      ),
-                      trailing: const Icon(Icons.keyboard_arrow_right),
-                      onTap: () async {
-                        final confirm = await showDialog<bool>(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Center(
-                              child: Text(
-                                'Confirmar',
-                                style: TextStyle(
-                                  color: Colors.red,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            content: const Text('¿Estás seguro de cerrar sesión?'),
-                            actions: [
-                              TextButton(
-                                child: const Text('Cancelar'),
-                                onPressed: () => Navigator.of(context).pop(false),
-                              ),
-                              TextButton(
-                                child: const Text('Sí'),
-                                onPressed: () => Navigator.of(context).pop(true),
-                              ),
-                            ],
-                          ),
-                        );
-                        if (confirm == true) {
-                          await FirebaseAuth.instance.signOut();
-                          Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(builder: (context) => const LoginPage()),
-                            (Route<dynamic> route) => false,
-                          );
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 30),
-                  ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                userData?['nombre'] ?? '',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
                 ),
-              );
+              ),
+              const SizedBox(height: 10),
+              sectionTitle("Información Personal"),
+              infoItem("Nombre", userData?['nombre']),
+              infoItem("Cedula", userData?['cedula']),
+              infoItem("Correo", userData?['correo']),
+              infoItem("Teléfono", userData?['telefono']),
+              infoItem("Fecha Nac", userData?['fechaNacimiento']),
+              infoItem("Dirección", userData?['direccion']),
+              infoItem("Barrio", userData?['barrio']),
+              infoItem("Ciudad", userData?['ciudad']),
+              const SizedBox(height: 15),
+              Center(
+                child: SizedBox(
+                  width: 200,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      _mostrarDialogoEditarDatos(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      padding: const EdgeInsets.all(0),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: Ink(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF7b43cd), Color(0xFF2575FC)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                          horizontal: 20,
+                        ),
+                        alignment: Alignment.center,
+                        child: const Text(
+                          "Editar datos",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 30),
+              listTileItem(Icons.history, "Historial"),
+              ListTile(
+                leading: const Icon(
+                  Icons.description,
+                  color: Color(0xFF4B4EAB),
+                ),
+                title: const Text("Términos y condiciones"),
+                trailing: const Icon(Icons.keyboard_arrow_right),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => PaginaTerminos()),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.logout, color: Color(0xFF4B4EAB)),
+                title: const Text(
+                  "Cerrar sesión",
+                  style: TextStyle(color: Colors.black),
+                ),
+                trailing: const Icon(Icons.keyboard_arrow_right),
+                onTap: () async {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder:
+                        (context) => AlertDialog(
+                          title: const Center(
+                            child: Text(
+                              'Confirmar',
+                              style: TextStyle(
+                                color: Colors.red,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          content: const Text(
+                            '¿Estás seguro de cerrar sesión?',
+                          ),
+                          actionsAlignment:
+                              MainAxisAlignment.center, // 🔴 Centra los botones
+                          actions: [
+                            Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 4),
+                              decoration: BoxDecoration(
+                                color: Color(0xFF4B4EAB), // Color morado
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: TextButton(
+                                child: const Text(
+                                  'Cancelar',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                  ), // Texto blanco
+                                ),
+                                onPressed:
+                                    () => Navigator.of(context).pop(false),
+                              ),
+                            ),
+                            Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 4),
+                              decoration: BoxDecoration(
+                                color: Color(0xFF4B4EAB), // Color morado
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: TextButton(
+                                child: const Text(
+                                  'Sí',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                  ), // Texto blanco
+                                ),
+                                onPressed:
+                                    () => Navigator.of(context).pop(true),
+                              ),
+                            ),
+                          ],
+                        ),
+                  );
+                  if (confirm == true) {
+                    await FirebaseAuth.instance.signOut();
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const LoginPage(),
+                      ),
+                      (Route<dynamic> route) => false,
+                    );
+                  }
+                },
+              ),
+              const SizedBox(height: 30),
+            ],
+          ),
+        );
   }
 
   Widget sectionTitle(String title) {

@@ -6,7 +6,7 @@ class PaginaDescripcionVehiculo extends StatelessWidget {
   final String placa;
 
   const PaginaDescripcionVehiculo({Key? key, required this.placa})
-      : super(key: key);
+    : super(key: key);
 
   Future<DocumentSnapshot<Map<String, dynamic>>> obtenerVehiculo() async {
     final query =
@@ -28,10 +28,11 @@ class PaginaDescripcionVehiculo extends StatelessWidget {
       return 'No disponible';
     }
     try {
-      final userDoc = await FirebaseFirestore.instance
-          .collection('Usuarios')
-          .doc(propietarioUid)
-          .get();
+      final userDoc =
+          await FirebaseFirestore.instance
+              .collection('Usuarios')
+              .doc(propietarioUid)
+              .get();
       if (userDoc.exists) {
         return userDoc.data()?['telefono'] ?? 'No disponible';
       }
@@ -95,7 +96,8 @@ class PaginaDescripcionVehiculo extends StatelessWidget {
                 return const Center(child: CircularProgressIndicator());
               }
 
-              final telefonoPropietario = telefonoSnapshot.data ?? 'No disponible';
+              final telefonoPropietario =
+                  telefonoSnapshot.data ?? 'No disponible';
 
               return SingleChildScrollView(
                 child: Padding(
@@ -149,7 +151,6 @@ class PaginaDescripcionVehiculo extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 16),
-
                           const Text(
                             'Descripción:',
                             style: TextStyle(
@@ -157,8 +158,9 @@ class PaginaDescripcionVehiculo extends StatelessWidget {
                               color: Colors.purple,
                             ),
                           ),
-                          Text(data['descripcion'] ?? 'Sin descripción disponible'),
-
+                          Text(
+                            data['descripcion'] ?? 'Sin descripción disponible',
+                          ),
                           const SizedBox(height: 16),
                           const Text(
                             'Detalles:',
@@ -167,7 +169,6 @@ class PaginaDescripcionVehiculo extends StatelessWidget {
                               color: Colors.purple,
                             ),
                           ),
-
                           Wrap(
                             spacing: 16,
                             runSpacing: 10,
@@ -185,64 +186,39 @@ class PaginaDescripcionVehiculo extends StatelessWidget {
                                 Icons.door_front_door,
                                 '${detalles['puertas'] ?? 4} puertas',
                               ),
-                              detalleIcono(Icons.speed, 'Kilometraje ilimitado'),
+                              detalleIcono(
+                                Icons.speed,
+                                'Kilometraje ilimitado',
+                              ),
                               detalleIcono(
                                 Icons.local_gas_station,
-                                detalles['tipoCombustible'] ?? 'Combustible full',
+                                detalles['tipoCombustible'] ??
+                                    'Combustible full',
                               ),
                             ],
                           ),
-
                           const SizedBox(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              GestureDetector(
-                                onTap: () {},
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 12,
-                                  ),
-                                  decoration: const BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [Color(0xFF7b43cd), Color(0xFF071082)],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                    borderRadius: BorderRadius.all(Radius.circular(10)),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: const [
-                                      Icon(Icons.location_on, color: Colors.white),
-                                      SizedBox(width: 8),
-                                      Text(
-                                        'Ver ubicación',
-                                        style: TextStyle(color: Colors.white),
-                                      ),
-                                    ],
-                                  ),
-                                ),
+
+                          // Aquí el precio ocupando todo el ancho, sin botón de ubicación
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.pink.shade600,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              '${data['precioPorDia']} COP/Día',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
                               ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.pink.shade600,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  '${data['precioPorDia']} COP/Día',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
 
                           const SizedBox(height: 16),
@@ -250,9 +226,10 @@ class PaginaDescripcionVehiculo extends StatelessWidget {
                             'Datos propietario:',
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
-                          Text('Nombre: ${data['Propietario'] ?? 'No disponible'}'),
+                          Text(
+                            'Nombre: ${data['Propietario'] ?? 'No disponible'}',
+                          ),
                           Text('Cel: $telefonoPropietario'),
-
                           const SizedBox(height: 16),
                           Center(
                             child: GestureDetector(
@@ -260,7 +237,9 @@ class PaginaDescripcionVehiculo extends StatelessWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => PaginaAlquilar(placa: placa),
+                                    builder:
+                                        (context) =>
+                                            PaginaAlquilar(placa: placa),
                                   ),
                                 );
                               },
@@ -271,11 +250,16 @@ class PaginaDescripcionVehiculo extends StatelessWidget {
                                 ),
                                 decoration: const BoxDecoration(
                                   gradient: LinearGradient(
-                                    colors: [Color(0xFF7b43cd), Color(0xFF071082)],
+                                    colors: [
+                                      Color(0xFF7b43cd),
+                                      Color(0xFF071082),
+                                    ],
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
                                   ),
-                                  borderRadius: BorderRadius.all(Radius.circular(10)),
+                                  borderRadius: BorderRadius.all(
+                                    Radius.circular(10),
+                                  ),
                                 ),
                                 child: const Text(
                                   'Alquilar vehículo',

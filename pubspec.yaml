@@ -45,6 +45,7 @@ dependencies:
   cloudinary_public: ^0.23.1
   http: ^1.4.0
   image_picker: ^1.1.2
+  flutter_rating_bar: ^4.0.0
   
 
  
@@ -77,6 +78,7 @@ flutter:
     - imagenes/cercano.png
     - imagenes/estadisticas.png
     - imagenes/categoria.png
+    - imagenes/renta.jpeg
   uses-material-design: true
 
 

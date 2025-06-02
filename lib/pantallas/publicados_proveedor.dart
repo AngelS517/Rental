@@ -40,7 +40,11 @@ class _PublicadosProveedorState extends State<PublicadosProveedor> {
 
   Future<void> _cargarNombrePropietario() async {
     try {
-      final userDoc = await FirebaseFirestore.instance.collection('Usuarios').doc(_uid).get();
+      final userDoc =
+          await FirebaseFirestore.instance
+              .collection('Usuarios')
+              .doc(_uid)
+              .get();
       if (userDoc.exists && userDoc.data() != null) {
         setState(() {
           _propietario = userDoc.data()?['nombre'] ?? 'Proveedor desconocido';
@@ -57,23 +61,42 @@ class _PublicadosProveedorState extends State<PublicadosProveedor> {
     }
   }
 
-  Future<void> _mostrarDialogoEditarVehiculo(BuildContext context, DocumentSnapshot vehiculo) async {
+  Future<void> _mostrarDialogoEditarVehiculo(
+    BuildContext context,
+    DocumentSnapshot vehiculo,
+  ) async {
     if (_propietario == null) {
       await _cargarNombrePropietario();
     }
 
-    final TextEditingController ciudadController = TextEditingController(text: vehiculo['ciudad']?.toString() ?? '');
+    final TextEditingController ciudadController = TextEditingController(
+      text: vehiculo['ciudad']?.toString() ?? '',
+    );
     String? _categoria = vehiculo['categoria']?.toString() ?? null;
-    final TextEditingController descripcionController = TextEditingController(text: vehiculo['descripcion']?.toString() ?? '');
-    final TextEditingController direccionController = TextEditingController(text: vehiculo['direccion']?.toString() ?? '');
-    final TextEditingController marcaController = TextEditingController(text: vehiculo['marca']?.toString() ?? '');
-    final TextEditingController modeloController = TextEditingController(text: vehiculo['modelo']?.toString() ?? '');
-    final TextEditingController placaController = TextEditingController(text: vehiculo['placa']?.toString() ?? '');
-    final TextEditingController precioController = TextEditingController(text: vehiculo['precioPorDia']?.toString() ?? '');
+    final TextEditingController descripcionController = TextEditingController(
+      text: vehiculo['descripcion']?.toString() ?? '',
+    );
+    final TextEditingController direccionController = TextEditingController(
+      text: vehiculo['direccion']?.toString() ?? '',
+    );
+    final TextEditingController marcaController = TextEditingController(
+      text: vehiculo['marca']?.toString() ?? '',
+    );
+    final TextEditingController modeloController = TextEditingController(
+      text: vehiculo['modelo']?.toString() ?? '',
+    );
+    final TextEditingController placaController = TextEditingController(
+      text: vehiculo['placa']?.toString() ?? '',
+    );
+    final TextEditingController precioController = TextEditingController(
+      text: vehiculo['precioPorDia']?.toString() ?? '',
+    );
     String? _numPasajeros = vehiculo['detalles']?['#pasajeros']?.toString();
     String? _numPuertas = vehiculo['detalles']?['#puertas']?.toString();
-    String? _tipoCombustible = vehiculo['detalles']?['tipoCombustible']?.toString();
-    String? _tipoTransmision = vehiculo['detalles']?['tipoDeTransmision']?.toString();
+    String? _tipoCombustible =
+        vehiculo['detalles']?['tipoCombustible']?.toString();
+    String? _tipoTransmision =
+        vehiculo['detalles']?['tipoDeTransmision']?.toString();
     bool _ventilacionChecked = vehiculo['detalles']?['ventilacion'] != null;
     String? _kilometrajeType = vehiculo['detalles']?['kilometraje']?.toString();
 
@@ -90,7 +113,11 @@ class _PublicadosProveedorState extends State<PublicadosProveedor> {
                   const SizedBox(height: 8),
                   Text(
                     'Propietario: $_propietario',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.grey),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey,
+                    ),
                   ),
                 ],
               ),
@@ -101,147 +128,222 @@ class _PublicadosProveedorState extends State<PublicadosProveedor> {
                     TextFormField(
                       controller: ciudadController,
                       decoration: const InputDecoration(labelText: 'Ciudad'),
-                      validator: (value) => value == null || value.isEmpty ? 'Campo requerido' : null,
+                      validator:
+                          (value) =>
+                              value == null || value.isEmpty
+                                  ? 'Campo requerido'
+                                  : null,
                     ),
                     DropdownButtonFormField<String>(
                       decoration: const InputDecoration(labelText: 'Categoría'),
                       value: _categoria,
-                      items: ['Automovil', 'Moto', 'Electrico', 'Minivan'].map((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
+                      items:
+                          ['Automovil', 'Moto', 'Electrico', 'Minivan'].map((
+                            String value,
+                          ) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
                       onChanged: (value) {
                         setState(() {
                           _categoria = value;
                         });
                       },
-                      validator: (value) => value == null ? 'Seleccione una categoría' : null,
+                      validator:
+                          (value) =>
+                              value == null ? 'Seleccione una categoría' : null,
                     ),
                     TextFormField(
                       controller: descripcionController,
-                      decoration: const InputDecoration(labelText: 'Descripción'),
-                      validator: (value) => value == null || value.isEmpty ? 'Campo requerido' : null,
+                      decoration: const InputDecoration(
+                        labelText: 'Descripción',
+                      ),
+                      validator:
+                          (value) =>
+                              value == null || value.isEmpty
+                                  ? 'Campo requerido'
+                                  : null,
                     ),
                     TextFormField(
                       controller: direccionController,
                       decoration: const InputDecoration(labelText: 'Dirección'),
-                      validator: (value) => value == null || value.isEmpty ? 'Campo requerido' : null,
+                      validator:
+                          (value) =>
+                              value == null || value.isEmpty
+                                  ? 'Campo requerido'
+                                  : null,
                     ),
                     TextFormField(
                       controller: marcaController,
                       decoration: const InputDecoration(labelText: 'Marca'),
-                      validator: (value) => value == null || value.isEmpty ? 'Campo requerido' : null,
+                      validator:
+                          (value) =>
+                              value == null || value.isEmpty
+                                  ? 'Campo requerido'
+                                  : null,
                     ),
                     TextFormField(
                       controller: modeloController,
                       decoration: const InputDecoration(labelText: 'Modelo'),
                       keyboardType: TextInputType.number,
-                      validator: (value) => value == null || value.isEmpty ? 'Campo requerido' : null,
+                      validator:
+                          (value) =>
+                              value == null || value.isEmpty
+                                  ? 'Campo requerido'
+                                  : null,
                     ),
                     TextFormField(
                       controller: placaController,
                       decoration: const InputDecoration(labelText: 'Placa'),
-                      validator: (value) => value == null || value.isEmpty ? 'Campo requerido' : null,
+                      validator:
+                          (value) =>
+                              value == null || value.isEmpty
+                                  ? 'Campo requerido'
+                                  : null,
                     ),
                     TextFormField(
                       controller: precioController,
-                      decoration: const InputDecoration(labelText: 'Precio por Día'),
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      validator: (value) => value == null || value.isEmpty ? 'Campo requerido' : null,
+                      decoration: const InputDecoration(
+                        labelText: 'Precio por Día',
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      validator:
+                          (value) =>
+                              value == null || value.isEmpty
+                                  ? 'Campo requerido'
+                                  : null,
                     ),
                     const Text('Detalles:'),
                     DropdownButtonFormField<String>(
-                      decoration: const InputDecoration(labelText: 'Número de Pasajeros'),
+                      decoration: const InputDecoration(
+                        labelText: 'Número de Pasajeros',
+                      ),
                       value: _numPasajeros,
-                      items: ['1', '2', '3', '4', '5', '6', '7', '8'].map((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
+                      items:
+                          ['1', '2', '3', '4', '5', '6', '7', '8'].map((
+                            String value,
+                          ) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
                       onChanged: (value) {
                         setState(() {
                           _numPasajeros = value;
                         });
                       },
-                      validator: (value) => value == null ? 'Seleccione un valor' : null,
+                      validator:
+                          (value) =>
+                              value == null ? 'Seleccione un valor' : null,
                     ),
                     DropdownButtonFormField<String>(
-                      decoration: const InputDecoration(labelText: 'Número de Puertas'),
+                      decoration: const InputDecoration(
+                        labelText: 'Número de Puertas',
+                      ),
                       value: _numPuertas,
-                      items: ['2', '3', '4', '5'].map((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
+                      items:
+                          ['2', '3', '4', '5'].map((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
                       onChanged: (value) {
                         setState(() {
                           _numPuertas = value;
                         });
                       },
-                      validator: (value) => value == null ? 'Seleccione un valor' : null,
+                      validator:
+                          (value) =>
+                              value == null ? 'Seleccione un valor' : null,
                     ),
                     DropdownButtonFormField<String>(
-                      decoration: const InputDecoration(labelText: 'Tipo de Combustible'),
+                      decoration: const InputDecoration(
+                        labelText: 'Tipo de Combustible',
+                      ),
                       value: _tipoCombustible,
-                      items: _categoria == 'Electrico'
-                          ? []
-                          : ['Corriente', 'ACP', 'Gas'].map((String value) {
-                              return DropdownMenuItem<String>(
-                                value: value,
-                                child: Text(value),
-                              );
-                            }).toList(),
-                      onChanged: _categoria == 'Electrico'
-                          ? null
-                          : (value) {
-                              setState(() {
-                                _tipoCombustible = value;
-                              });
-                            },
-                      validator: _categoria == 'Electrico'
-                          ? null
-                          : (value) => value == null ? 'Seleccione un valor' : null,
+                      items:
+                          _categoria == 'Electrico'
+                              ? []
+                              : ['Corriente', 'ACP', 'Gas'].map((String value) {
+                                return DropdownMenuItem<String>(
+                                  value: value,
+                                  child: Text(value),
+                                );
+                              }).toList(),
+                      onChanged:
+                          _categoria == 'Electrico'
+                              ? null
+                              : (value) {
+                                setState(() {
+                                  _tipoCombustible = value;
+                                });
+                              },
+                      validator:
+                          _categoria == 'Electrico'
+                              ? null
+                              : (value) =>
+                                  value == null ? 'Seleccione un valor' : null,
                     ),
                     CheckboxListTile(
-                      title: const Text('Ventilación (Aire Acondicionado/Ventilador)'),
+                      title: const Text(
+                        'Ventilación (Aire Acondicionado/Ventilador)',
+                      ),
                       value: _ventilacionChecked,
-                      onChanged: (value) => setState(() => _ventilacionChecked = value!),
+                      onChanged:
+                          (value) =>
+                              setState(() => _ventilacionChecked = value!),
                     ),
                     DropdownButtonFormField<String>(
-                      decoration: const InputDecoration(labelText: 'Kilometraje'),
+                      decoration: const InputDecoration(
+                        labelText: 'Kilometraje',
+                      ),
                       value: _kilometrajeType,
-                      items: ['Limitado', 'Ilimitado', 'No aplica'].map((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
+                      items:
+                          ['Limitado', 'Ilimitado', 'No aplica'].map((
+                            String value,
+                          ) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
                       onChanged: (value) {
                         setState(() {
                           _kilometrajeType = value;
                         });
                       },
-                      validator: (value) => value == null ? 'Seleccione un valor' : null,
+                      validator:
+                          (value) =>
+                              value == null ? 'Seleccione un valor' : null,
                     ),
                     DropdownButtonFormField<String>(
-                      decoration: const InputDecoration(labelText: 'Tipo de Transmisión'),
+                      decoration: const InputDecoration(
+                        labelText: 'Tipo de Transmisión',
+                      ),
                       value: _tipoTransmision,
-                      items: ['Automático', 'Semiautomático', 'Mecánico'].map((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
+                      items:
+                          ['Automático', 'Semiautomático', 'Mecánico'].map((
+                            String value,
+                          ) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
                       onChanged: (value) {
                         setState(() {
                           _tipoTransmision = value;
                         });
                       },
-                      validator: (value) => value == null ? 'Seleccione un valor' : null,
+                      validator:
+                          (value) =>
+                              value == null ? 'Seleccione un valor' : null,
                     ),
                   ],
                 ),
@@ -257,18 +359,25 @@ class _PublicadosProveedorState extends State<PublicadosProveedor> {
                     try {
                       if (_uid == null) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Error: Debes iniciar sesión.')),
+                          const SnackBar(
+                            content: Text('Error: Debes iniciar sesión.'),
+                          ),
                         );
                         return;
                       }
 
                       final detalles = {
-                        if (_numPasajeros != null) '#pasajeros': int.parse(_numPasajeros!),
-                        if (_numPuertas != null) '#puertas': int.parse(_numPuertas!),
-                        if (_tipoCombustible != null) 'tipoCombustible': _tipoCombustible,
+                        if (_numPasajeros != null)
+                          '#pasajeros': int.parse(_numPasajeros!),
+                        if (_numPuertas != null)
+                          '#puertas': int.parse(_numPuertas!),
+                        if (_tipoCombustible != null)
+                          'tipoCombustible': _tipoCombustible,
                         if (_ventilacionChecked) 'ventilacion': null,
-                        if (_kilometrajeType != null) 'kilometraje': _kilometrajeType,
-                        if (_tipoTransmision != null) 'tipoDeTransmision': _tipoTransmision,
+                        if (_kilometrajeType != null)
+                          'kilometraje': _kilometrajeType,
+                        if (_tipoTransmision != null)
+                          'tipoDeTransmision': _tipoTransmision,
                       };
 
                       final data = {
@@ -281,7 +390,8 @@ class _PublicadosProveedorState extends State<PublicadosProveedor> {
                         'marca': marcaController.text,
                         'modelo': int.tryParse(modeloController.text) ?? 0,
                         'placa': placaController.text,
-                        'precioPorDia': double.tryParse(precioController.text) ?? 0.0,
+                        'precioPorDia':
+                            double.tryParse(precioController.text) ?? 0.0,
                         'detalles': detalles.isNotEmpty ? detalles : null,
                       };
 
@@ -290,12 +400,16 @@ class _PublicadosProveedorState extends State<PublicadosProveedor> {
                           .doc(vehiculo.id)
                           .update(data);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Vehículo actualizado correctamente')),
+                        const SnackBar(
+                          content: Text('Vehículo actualizado correctamente'),
+                        ),
                       );
                       Navigator.of(context).pop();
                     } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Error al guardar vehículo: $e')),
+                        SnackBar(
+                          content: Text('Error al guardar vehículo: $e'),
+                        ),
                       );
                     }
                   },
@@ -310,14 +424,17 @@ class _PublicadosProveedorState extends State<PublicadosProveedor> {
 
   Future<void> _eliminarVehiculo(String vehiculoId) async {
     try {
-      await FirebaseFirestore.instance.collection('Vehiculos').doc(vehiculoId).delete();
+      await FirebaseFirestore.instance
+          .collection('Vehiculos')
+          .doc(vehiculoId)
+          .delete();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Vehículo eliminado correctamente')),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al eliminar vehículo: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error al eliminar vehículo: $e')));
     }
   }
 
@@ -337,9 +454,7 @@ class _PublicadosProveedorState extends State<PublicadosProveedor> {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       color: Colors.white.withOpacity(0.9),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -347,7 +462,9 @@ class _PublicadosProveedorState extends State<PublicadosProveedor> {
             leading: ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Image.network(
-                imagenUrl.isNotEmpty ? imagenUrl : 'https://via.placeholder.com/60', // Placeholder si no hay imagen
+                imagenUrl.isNotEmpty
+                    ? imagenUrl
+                    : 'https://via.placeholder.com/60', // Placeholder si no hay imagen
                 width: 60,
                 height: 60,
                 fit: BoxFit.cover,
@@ -368,8 +485,14 @@ class _PublicadosProveedorState extends State<PublicadosProveedor> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 4),
-                Text('Precio: \$${precio.toStringAsFixed(0)} COP/Día', style: const TextStyle(fontSize: 14)),
-                Text('Pasajeros: $numPasajeros', style: const TextStyle(fontSize: 14)),
+                Text(
+                  'Precio: \$${precio.toStringAsFixed(0)} COP/Día',
+                  style: const TextStyle(fontSize: 14),
+                ),
+                Text(
+                  'Pasajeros: $numPasajeros',
+                  style: const TextStyle(fontSize: 14),
+                ),
               ],
             ),
           ),
@@ -379,7 +502,8 @@ class _PublicadosProveedorState extends State<PublicadosProveedor> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 ElevatedButton(
-                  onPressed: () => _mostrarDialogoEditarVehiculo(context, vehiculo),
+                  onPressed:
+                      () => _mostrarDialogoEditarVehiculo(context, vehiculo),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF4B4EAB),
                     foregroundColor: Colors.white,
@@ -412,7 +536,9 @@ class _PublicadosProveedorState extends State<PublicadosProveedor> {
   @override
   Widget build(BuildContext context) {
     if (_uid == null) {
-      return const Center(child: Text('Error: No se pudo cargar los datos del proveedor.'));
+      return const Center(
+        child: Text('Error: No se pudo cargar los datos del proveedor.'),
+      );
     }
 
     return Scaffold(
@@ -420,10 +546,11 @@ class _PublicadosProveedorState extends State<PublicadosProveedor> {
         children: [
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('Vehiculos')
-                  .where('proveedorUid', isEqualTo: _uid)
-                  .snapshots(),
+              stream:
+                  FirebaseFirestore.instance
+                      .collection('Vehiculos')
+                      .where('proveedorUid', isEqualTo: _uid)
+                      .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -432,7 +559,9 @@ class _PublicadosProveedorState extends State<PublicadosProveedor> {
                   return Center(child: Text('Error: ${snapshot.error}'));
                 }
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(child: Text('No tienes vehículos publicados.'));
+                  return const Center(
+                    child: Text('No tienes vehículos publicados.'),
+                  );
                 }
 
                 final vehiculos = snapshot.data!.docs;
@@ -447,7 +576,8 @@ class _PublicadosProveedorState extends State<PublicadosProveedor> {
                     return vehiculoItem(
                       data['marca']?.toString() ?? 'Sin marca',
                       imagenUrl,
-                      data['direccion']?.toString() ?? 'Dirección no disponible',
+                      data['direccion']?.toString() ??
+                          'Dirección no disponible',
                       data['ciudad']?.toString() ?? 'Ciudad no disponible',
                       vehiculo.id,
                       vehiculo,
@@ -460,11 +590,36 @@ class _PublicadosProveedorState extends State<PublicadosProveedor> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const PaginaAgregar()),
-          );
+        onPressed: () async {
+          final uid = FirebaseAuth.instance.currentUser?.uid;
+
+          if (uid == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Debes iniciar sesión')),
+            );
+            return;
+          }
+
+          final snapshot =
+              await FirebaseFirestore.instance
+                  .collection('Vehiculos')
+                  .where('proveedorUid', isEqualTo: uid)
+                  .get();
+
+          if (snapshot.docs.length >= 5) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Cantidad de vehículos superada. Solo puedes tener 5 vehículos.',
+                ),
+              ),
+            );
+          } else {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const PaginaAgregar()),
+            );
+          }
         },
         child: const Icon(Icons.add),
         backgroundColor: const Color(0xFF7B1FA2),
