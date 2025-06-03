@@ -50,7 +50,11 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
 
   Future<void> _cargarNombrePropietario() async {
     try {
-      final userDoc = await FirebaseFirestore.instance.collection('Usuarios').doc(_proveedorUid).get();
+      final userDoc =
+          await FirebaseFirestore.instance
+              .collection('Usuarios')
+              .doc(_proveedorUid)
+              .get();
       if (userDoc.exists && userDoc.data() != null) {
         setState(() {
           _propietario = userDoc.data()?['nombre'] ?? 'Proveedor desconocido';
@@ -73,19 +77,29 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
       final imageSize = await imageFile.length();
       if (imageSize > 10 * 1024 * 1024) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('La imagen es demasiado grande. Máximo 10 MB.')),
+          const SnackBar(
+            content: Text('La imagen es demasiado grande. Máximo 10 MB.'),
+          ),
         );
         return null;
       }
 
-      var uri = Uri.parse('https://api.cloudinary.com/v1_1/dzmcnktot/image/upload');
-      var request = http.MultipartRequest('POST', uri)
-        ..fields['upload_preset'] = 'Rental'
-        ..files.add(await http.MultipartFile.fromPath('file', imageFile.path));
+      var uri = Uri.parse(
+        'https://api.cloudinary.com/v1_1/dzmcnktot/image/upload',
+      );
+      var request =
+          http.MultipartRequest('POST', uri)
+            ..fields['upload_preset'] = 'Rental'
+            ..files.add(
+              await http.MultipartFile.fromPath('file', imageFile.path),
+            );
 
-      var response = await request.send().timeout(const Duration(seconds: 30), onTimeout: () {
-        throw Exception('Tiempo de espera agotado al subir la imagen.');
-      });
+      var response = await request.send().timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          throw Exception('Tiempo de espera agotado al subir la imagen.');
+        },
+      );
 
       if (response.statusCode == 200) {
         var responseData = await response.stream.bytesToString();
@@ -99,38 +113,51 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
           } else {
             print('Error: secure_url is null or empty');
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Error: No se recibió una URL válida de la imagen.')),
+              const SnackBar(
+                content: Text(
+                  'Error: No se recibió una URL válida de la imagen.',
+                ),
+              ),
             );
             return null;
           }
         } else {
           print('Error: Invalid JSON response - $jsonResponse');
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Error: Respuesta inválida de Cloudinary.')),
+            const SnackBar(
+              content: Text('Error: Respuesta inválida de Cloudinary.'),
+            ),
           );
           return null;
         }
       } else {
         var responseData = await response.stream.bytesToString();
         print('Upload Error: ${response.statusCode} - $responseData');
-        if (response.statusCode == 400 && responseData.contains('whitelisted')) {
+        if (response.statusCode == 400 &&
+            responseData.contains('whitelisted')) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Error: Configura el upload preset "Rental" como Unsigned en Cloudinary.'),
+              content: Text(
+                'Error: Configura el upload preset "Rental" como Unsigned en Cloudinary.',
+              ),
             ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error al subir la imagen: Código ${response.statusCode}')),
+            SnackBar(
+              content: Text(
+                'Error al subir la imagen: Código ${response.statusCode}',
+              ),
+            ),
           );
         }
         return null;
       }
     } catch (e) {
       print('Upload Exception: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al subir la imagen: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error al subir la imagen: $e')));
       return null;
     }
   }
@@ -145,16 +172,37 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
   }
 
   Future<void> _registrarVehiculo() async {
-    if (_formKey.currentState!.validate() && _propietario != null && _proveedorUid != null) {
+    if (_formKey.currentState!.validate() &&
+        _propietario != null &&
+        _proveedorUid != null) {
       try {
+        // Verificar si la placa ya está registrada
+        final placaExistente =
+            await FirebaseFirestore.instance
+                .collection('Vehiculos')
+                .where('placa', isEqualTo: _placaController.text)
+                .get();
+
+        if (placaExistente.docs.isNotEmpty) {
+          // Mostrar mensaje si la placa ya está registrada
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('La placa ya está registrada en otro vehículo.'),
+            ),
+          );
+          return; // Detener el registro
+        }
+
         String? imageUrl;
         if (_imageFile != null) {
           imageUrl = await _uploadImageToCloudinary(_imageFile!);
           if (imageUrl == null) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Fallo al subir la imagen. Intenta de nuevo.')),
+              const SnackBar(
+                content: Text('Fallo al subir la imagen. Intenta de nuevo.'),
+              ),
             );
-            return; // Detener el registro si la imagen no se sube
+            return;
           }
         }
 
@@ -167,22 +215,27 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
           if (_tipoTransmision != null) 'tipoDeTransmision': _tipoTransmision,
         };
 
-        DocumentReference docRef = await FirebaseFirestore.instance.collection('Vehiculos').add({
-          'Propietario': _propietario,
-          'categoria': _selectedCategory,
-          'ciudad': _ciudadController.text,
-          'descripcion': _descripcionController.text,
-          'detalles': detalles.isNotEmpty ? detalles : null,
-          'direccion': _direccionController.text,
-          'marca': _marcaController.text,
-          'modelo': int.tryParse(_modeloController.text) ?? 0,
-          'placa': _placaController.text,
-          'precioPorDia': double.tryParse(_precioController.text) ?? 0.0,
-          'proveedorUid': _proveedorUid,
-          'imagen': imageUrl, // Guardar el URL de Cloudinary en Firestore
-        });
+        DocumentReference docRef = await FirebaseFirestore.instance
+            .collection('Vehiculos')
+            .add({
+              'Propietario': _propietario,
+              'categoria': _selectedCategory,
+              'ciudad': _ciudadController.text,
+              'descripcion': _descripcionController.text,
+              'detalles': detalles.isNotEmpty ? detalles : null,
+              'direccion': _direccionController.text,
+              'marca': _marcaController.text,
+              'modelo': int.tryParse(_modeloController.text) ?? 0,
+              'placa': _placaController.text,
+              'precioPorDia': double.tryParse(_precioController.text) ?? 0.0,
+              'proveedorUid': _proveedorUid,
+              'imagen': imageUrl,
+              'disponible': true,
+            });
 
-        print('Vehículo registrado con ID: ${docRef.id}, Imagen URL: $imageUrl'); // Depuración
+        print(
+          'Vehículo registrado con ID: ${docRef.id}, Imagen URL: $imageUrl',
+        );
 
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -191,9 +244,9 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
           Navigator.pop(context);
         }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al registrar: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error al registrar: $e')));
       }
     }
   }
@@ -210,7 +263,11 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
               const SizedBox(height: 8),
               Text(
                 'Propietario: ${_propietario ?? 'Cargando...'}',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.grey),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey,
+                ),
               ),
             ],
           ),
@@ -223,162 +280,220 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
                   TextFormField(
                     controller: _ciudadController,
                     decoration: const InputDecoration(labelText: 'Ciudad'),
-                    validator: (value) =>
-                        value == null || value.isEmpty ? 'Campo requerido' : null,
+                    validator:
+                        (value) =>
+                            value == null || value.isEmpty
+                                ? 'Campo requerido'
+                                : null,
                   ),
                   DropdownButtonFormField<String>(
                     decoration: const InputDecoration(labelText: 'Categoría'),
                     value: _selectedCategory,
-                    items: ['Automovil', 'Moto', 'Electrico', 'Minivan'].map((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
+                    items:
+                        ['Automovil', 'Moto', 'Electrico', 'Minivan'].map((
+                          String value,
+                        ) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
                     onChanged: (value) {
                       setState(() {
                         _selectedCategory = value;
                       });
                     },
-                    validator: (value) => value == null ? 'Seleccione una categoría' : null,
+                    validator:
+                        (value) =>
+                            value == null ? 'Seleccione una categoría' : null,
                   ),
                   TextFormField(
                     controller: _descripcionController,
                     decoration: const InputDecoration(labelText: 'Descripción'),
-                    validator: (value) =>
-                        value == null || value.isEmpty ? 'Campo requerido' : null,
+                    validator:
+                        (value) =>
+                            value == null || value.isEmpty
+                                ? 'Campo requerido'
+                                : null,
                   ),
                   TextFormField(
                     controller: _direccionController,
                     decoration: const InputDecoration(labelText: 'Dirección'),
-                    validator: (value) =>
-                        value == null || value.isEmpty ? 'Campo requerido' : null,
+                    validator:
+                        (value) =>
+                            value == null || value.isEmpty
+                                ? 'Campo requerido'
+                                : null,
                   ),
                   TextFormField(
                     controller: _marcaController,
                     decoration: const InputDecoration(labelText: 'Marca'),
-                    validator: (value) =>
-                        value == null || value.isEmpty ? 'Campo requerido' : null,
+                    validator:
+                        (value) =>
+                            value == null || value.isEmpty
+                                ? 'Campo requerido'
+                                : null,
                   ),
                   TextFormField(
                     controller: _modeloController,
                     decoration: const InputDecoration(labelText: 'Modelo'),
                     keyboardType: TextInputType.number,
-                    validator: (value) =>
-                        value == null || value.isEmpty ? 'Campo requerido' : null,
+                    validator:
+                        (value) =>
+                            value == null || value.isEmpty
+                                ? 'Campo requerido'
+                                : null,
                   ),
                   TextFormField(
                     controller: _placaController,
                     decoration: const InputDecoration(labelText: 'Placa'),
-                    validator: (value) =>
-                        value == null || value.isEmpty ? 'Campo requerido' : null,
+                    validator:
+                        (value) =>
+                            value == null || value.isEmpty
+                                ? 'Campo requerido'
+                                : null,
                   ),
                   TextFormField(
                     controller: _precioController,
-                    decoration: const InputDecoration(labelText: 'Precio por Día'),
+                    decoration: const InputDecoration(
+                      labelText: 'Precio por Día',
+                    ),
                     keyboardType: TextInputType.number,
-                    validator: (value) =>
-                        value == null || value.isEmpty ? 'Campo requerido' : null,
+                    validator:
+                        (value) =>
+                            value == null || value.isEmpty
+                                ? 'Campo requerido'
+                                : null,
                   ),
                   const Text('Detalles:'),
                   DropdownButtonFormField<String>(
-                    decoration: const InputDecoration(labelText: 'Número de Pasajeros'),
+                    decoration: const InputDecoration(
+                      labelText: 'Número de Pasajeros',
+                    ),
                     value: _numPasajeros,
-                    items: ['1', '2', '3', '4', '5', '6', '7', '8'].map((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
+                    items:
+                        ['1', '2', '3', '4', '5', '6', '7', '8'].map((
+                          String value,
+                        ) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
                     onChanged: (value) {
                       setState(() {
                         _numPasajeros = value;
                       });
                     },
-                    validator: (value) => value == null ? 'Seleccione un valor' : null,
+                    validator:
+                        (value) => value == null ? 'Seleccione un valor' : null,
                   ),
                   DropdownButtonFormField<String>(
-                    decoration: const InputDecoration(labelText: 'Número de Puertas'),
+                    decoration: const InputDecoration(
+                      labelText: 'Número de Puertas',
+                    ),
                     value: _numPuertas,
-                    items: ['2', '3', '4', '5'].map((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
+                    items:
+                        ['2', '3', '4', '5'].map((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
                     onChanged: (value) {
                       setState(() {
                         _numPuertas = value;
                       });
                     },
-                    validator: (value) => value == null ? 'Seleccione un valor' : null,
+                    validator:
+                        (value) => value == null ? 'Seleccione un valor' : null,
                   ),
                   DropdownButtonFormField<String>(
-                    decoration: const InputDecoration(labelText: 'Tipo de Combustible'),
+                    decoration: const InputDecoration(
+                      labelText: 'Tipo de Combustible',
+                    ),
                     value: _tipoCombustible,
-                    items: _selectedCategory == 'Electrico'
-                        ? []
-                        : ['Corriente', 'ACP', 'Gas'].map((String value) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(value),
-                            );
-                          }).toList(),
-                    onChanged: _selectedCategory == 'Electrico'
-                        ? null
-                        : (value) {
-                            setState(() {
-                              _tipoCombustible = value;
-                            });
-                          },
-                    validator: _selectedCategory == 'Electrico'
-                        ? null
-                        : (value) => value == null ? 'Seleccione un valor' : null,
+                    items:
+                        _selectedCategory == 'Electrico'
+                            ? []
+                            : ['Corriente', 'ACP', 'Gas'].map((String value) {
+                              return DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(value),
+                              );
+                            }).toList(),
+                    onChanged:
+                        _selectedCategory == 'Electrico'
+                            ? null
+                            : (value) {
+                              setState(() {
+                                _tipoCombustible = value;
+                              });
+                            },
+                    validator:
+                        _selectedCategory == 'Electrico'
+                            ? null
+                            : (value) =>
+                                value == null ? 'Seleccione un valor' : null,
                   ),
                   CheckboxListTile(
-                    title: const Text('Ventilación (Aire Acondicionado/Ventilador)'),
+                    title: const Text(
+                      'Ventilación (Aire Acondicionado/Ventilador)',
+                    ),
                     value: _ventilacionChecked,
-                    onChanged: (value) => setState(() => _ventilacionChecked = value!),
+                    onChanged:
+                        (value) => setState(() => _ventilacionChecked = value!),
                   ),
                   DropdownButtonFormField<String>(
                     decoration: const InputDecoration(labelText: 'Kilometraje'),
                     value: _kilometrajeType,
-                    items: ['Limitado', 'Ilimitado', 'No aplica'].map((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
+                    items:
+                        ['Limitado', 'Ilimitado', 'No aplica'].map((
+                          String value,
+                        ) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
                     onChanged: (value) {
                       setState(() {
                         _kilometrajeType = value;
                       });
                     },
-                    validator: (value) => value == null ? 'Seleccione un valor' : null,
+                    validator:
+                        (value) => value == null ? 'Seleccione un valor' : null,
                   ),
                   DropdownButtonFormField<String>(
-                    decoration: const InputDecoration(labelText: 'Tipo de Transmisión'),
+                    decoration: const InputDecoration(
+                      labelText: 'Tipo de Transmisión',
+                    ),
                     value: _tipoTransmision,
-                    items: ['Automático', 'Semiautomático', 'Mecánico'].map((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
+                    items:
+                        ['Automático', 'Semiautomático', 'Mecánico'].map((
+                          String value,
+                        ) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
                     onChanged: (value) {
                       setState(() {
                         _tipoTransmision = value;
                       });
                     },
-                    validator: (value) => value == null ? 'Seleccione un valor' : null,
+                    validator:
+                        (value) => value == null ? 'Seleccione un valor' : null,
                   ),
                   // Campo para seleccionar imagen
                   ListTile(
                     leading: const Icon(Icons.image),
                     title: const Text('Seleccionar Imagen'),
-                    subtitle: _imageFile != null
-                        ? const Text('Imagen seleccionada')
-                        : const Text('Sin imagen seleccionada'),
+                    subtitle:
+                        _imageFile != null
+                            ? const Text('Imagen seleccionada')
+                            : const Text('Sin imagen seleccionada'),
                     onTap: _pickImage,
                   ),
                   if (_imageFile != null)

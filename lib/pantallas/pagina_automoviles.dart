@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:rental/widgets/custom_widgets.dart';
 
-
 class PaginaVehiculos extends StatefulWidget {
   final String? categoria;
 
@@ -20,7 +19,6 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
     setState(() => _selectedIndex = index);
     switch (index) {
       case 0:
-        // Regresar a PaginaPrincipal sin crear una nueva instancia
         Navigator.popUntil(context, (route) {
           return route.settings.name == '/inicio' || route.isFirst;
         });
@@ -57,6 +55,7 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
 
     Query<Map<String, dynamic>> query = FirebaseFirestore.instance
         .collection('Vehiculos')
+        .where('disponible', isEqualTo: true)
         .where('categoria', isEqualTo: categoria);
 
     return Scaffold(
@@ -84,7 +83,7 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                     IconButton(
                       icon: const Icon(Icons.arrow_back, color: Colors.white),
                       onPressed: () {
-                        Navigator.pop(context); // Regresa a la pantalla anterior
+                        Navigator.pop(context);
                       },
                     ),
                     Container(
@@ -199,43 +198,23 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                             : (data['calificacion'] as num?)?.toDouble() ?? 0.0;
                     final placa = data['placa'] as String;
 
-                    return StatefulBuilder(
-                      builder: (context, setState) {
-                        double _selectedRating = calificacion;
-
-                        void _updateRating(double rating) async {
-                          setState(() {
-                            _selectedRating = rating;
-                          });
-
-                          try {
-                            await FirebaseFirestore.instance
-                                .collection('Vehiculos')
-                                .doc(vehiculos[index].id)
-                                .update({'calificacion': rating});
-                          } catch (e) {
-                            print('Error al actualizar calificación: $e');
-                          }
-                        }
-
-                        return vehiculoItem(
-                          data['marca']?.toString() ?? 'Sin marca',
-                          data['modelo']?.toString() ?? '',
-                          data['precioPorDia']?.toDouble() ?? 0.0,
-                          data['Propietario']?.toString() ?? 'Desconocido',
-                          data['imagen']?.toString() ?? '',
-                          data['direccion']?.toString() ?? 'No disponible',
-                          data['ciudad']?.toString() ?? 'Ciudad desconocida',
-                          data['detalles']?['tipoCombustible']?.toString() ??
-                              'No especificado',
-                          data['detalles']?['#pasajeros']?.toString() ?? 'N/A',
-                          data['detalles']?['kilometraje']?.toString() ??
-                              'No especificado',
-                          _selectedRating,
-                          placa,
-                          (double rating) => _updateRating(rating),
-                        );
-                      },
+                    // Mostrar la calificación solo lectura, sin permitir modificarla
+                    return vehiculoItem(
+                      data['marca']?.toString() ?? 'Sin marca',
+                      data['modelo']?.toString() ?? '',
+                      data['precioPorDia']?.toDouble() ?? 0.0,
+                      data['Propietario']?.toString() ?? 'Desconocido',
+                      data['imagen']?.toString() ?? '',
+                      data['direccion']?.toString() ?? 'No disponible',
+                      data['ciudad']?.toString() ?? 'Ciudad desconocida',
+                      data['detalles']?['tipoCombustible']?.toString() ??
+                          'No especificado',
+                      data['detalles']?['#pasajeros']?.toString() ?? 'N/A',
+                      data['detalles']?['kilometraje']?.toString() ??
+                          'No especificado',
+                      calificacion,
+                      placa,
+                      null, // No se pasa callback para cambiar rating
                     );
                   },
                 );
@@ -264,7 +243,7 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
     String kilometraje,
     double calificacion,
     String placa,
-    Function(double) onRatingSelected,
+    Function(double)? onRatingSelected, // Ahora opcional
   ) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -409,17 +388,15 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
               ],
             ),
             const SizedBox(height: 4),
+            // Mostrar estrellas como solo lectura (sin onTap)
             Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: List.generate(5, (index) {
                 final starValue = index + 1;
-                return GestureDetector(
-                  onTap: () => onRatingSelected(starValue.toDouble()),
-                  child: Icon(
-                    starValue <= calificacion ? Icons.star : Icons.star_border,
-                    color: Colors.amber,
-                    size: 24,
-                  ),
+                return Icon(
+                  starValue <= calificacion ? Icons.star : Icons.star_border,
+                  color: Colors.amber,
+                  size: 24,
                 );
               }),
             ),
@@ -451,4 +428,4 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
       ),
     );
   }
-} 
+}
