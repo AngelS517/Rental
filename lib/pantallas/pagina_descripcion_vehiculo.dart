@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:geolocator/geolocator.dart' as geo;
+import 'package:permission_handler/permission_handler.dart';
 import 'pagina_alquilar.dart';
 
 class PaginaDescripcionVehiculo extends StatelessWidget {
@@ -39,6 +41,29 @@ class PaginaDescripcionVehiculo extends StatelessWidget {
     } catch (e) {
       return 'No disponible';
     }
+  }
+
+  Future<geo.Position> _getUserLocation() async {
+    var status = await Permission.locationWhenInUse.status;
+    if (!status.isGranted) {
+      await Permission.locationWhenInUse.request();
+    }
+    bool serviceEnabled = await geo.Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return Future.error('Los servicios de ubicación están deshabilitados.');
+    }
+
+    geo.LocationPermission permission = await geo.Geolocator.checkPermission();
+    if (permission == geo.LocationPermission.denied) {
+      permission = await geo.Geolocator.requestPermission();
+      if (permission == geo.LocationPermission.denied) {
+        return Future.error('Permiso de ubicación denegado.');
+      }
+    }
+
+    return await geo.Geolocator.getCurrentPosition(
+      desiredAccuracy: geo.LocationAccuracy.medium,
+    );
   }
 
   @override
@@ -198,7 +223,26 @@ class PaginaDescripcionVehiculo extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               GestureDetector(
-                                onTap: () {},
+                                onTap: () async {
+                                  try {
+                                    final userPosition = await _getUserLocation();
+                                    final vehicleAddress = '${data['direccion']}, ${data['ciudad']}, Colombia';
+                                    Navigator.pushNamed(
+                                      context,
+                                      '/mapa_automovil',
+                                      arguments: {
+                                        'direccion': vehicleAddress,
+                                        'ciudad': data['ciudad'],
+                                        'userLat': userPosition.latitude,
+                                        'userLon': userPosition.longitude,
+                                      },
+                                    );
+                                  } catch (e) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Error al obtener ubicación: $e')),
+                                    );
+                                  }
+                                },
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 16,
