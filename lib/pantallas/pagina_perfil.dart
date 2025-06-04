@@ -599,11 +599,16 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
               ),
               const SizedBox(height: 30),
               ListTile(
-                leading: const Icon(Icons.history),
+                leading: const Icon(
+                  Icons.history,
+                  color: Color(0xFF4B4EAB), // Color como el segundo ListTile
+                ),
                 title: const Text("Historial"),
                 trailing: const Icon(
                   Icons.keyboard_arrow_right,
-                  color: Colors.white,
+                  color: Color(
+                    0xFF4B4EAB,
+                  ), // Color de la flechita también igual
                 ),
                 onTap: () {
                   Navigator.push(
@@ -614,6 +619,7 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
                   );
                 },
               ),
+
               ListTile(
                 leading: const Icon(
                   Icons.description,

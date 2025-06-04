@@ -603,7 +603,6 @@ class _PaginaPerfilProveedorState extends State<PaginaPerfilProveedor> {
                 ),
               ),
               const SizedBox(height: 30),
-              listTileItem(Icons.history, "Historial"),
               ListTile(
                 leading: const Icon(
                   Icons.description,

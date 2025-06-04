@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'pagina_mapa.dart';
 import 'pagina_favoritos.dart';
 import 'pagina_perfil.dart';
+import 'dart:async';
 import 'package:rental/widgets/custom_widgets.dart';
 
 class PaginaPrincipal extends StatefulWidget {
@@ -17,7 +18,10 @@ class PaginaPrincipal extends StatefulWidget {
 class _PaginaPrincipalState extends State<PaginaPrincipal> {
   int _selectedIndex = 0;
 
-  late final Stream<QuerySnapshot<Map<String, dynamic>>> _ofertasStream;
+  late Stream<QuerySnapshot<Map<String, dynamic>>> _ofertasStream;
+  late StreamSubscription<QuerySnapshot<Map<String, dynamic>>>
+  _ofertasSubscription;
+  bool _mostrarBotonRecargar = false;
 
   @override
   void initState() {
@@ -29,13 +33,32 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
       ),
     );
 
-    // Inicializamos el stream con debounceTime
-    _ofertasStream = FirebaseFirestore.instance
+    _ofertasStream = _crearStreamOfertas();
+
+    _ofertasSubscription = FirebaseFirestore.instance
+        .collection('Vehiculos')
+        .snapshots()
+        .debounceTime(const Duration(seconds: 1))
+        .listen((_) {
+          setState(() {
+            _mostrarBotonRecargar = true;
+          });
+        });
+  }
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> _crearStreamOfertas() {
+    return FirebaseFirestore.instance
         .collection('Vehiculos')
         .where('precioPorDia', isLessThan: 26000)
         .where('disponible', isEqualTo: true)
         .snapshots()
         .debounceTime(const Duration(seconds: 1));
+  }
+
+  @override
+  void dispose() {
+    _ofertasSubscription.cancel();
+    super.dispose();
   }
 
   void _onItemTapped(int index) {
@@ -142,6 +165,29 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
               );
             },
           ),
+          const SizedBox(height: 20),
+
+          // Botón de recargar ofertas (solo visible cuando corresponde)
+          if (_mostrarBotonRecargar)
+            Center(
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _ofertasStream = _crearStreamOfertas();
+                    _mostrarBotonRecargar = false;
+                  });
+                },
+                icon: const Icon(Icons.refresh),
+                label: const Text('Cargar Ofertas'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );

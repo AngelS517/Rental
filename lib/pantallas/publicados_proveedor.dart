@@ -218,50 +218,55 @@ class _PublicadosProveedorState extends State<PublicadosProveedor> {
                                   : null,
                     ),
                     const Text('Detalles:'),
-                    DropdownButtonFormField<String>(
-                      decoration: const InputDecoration(
-                        labelText: 'Número de Pasajeros',
+                    // Campo: Número de Pasajeros (solo si no es Moto)
+                    if (_categoria != 'Moto')
+                      DropdownButtonFormField<String>(
+                        decoration: const InputDecoration(
+                          labelText: 'Número de Pasajeros',
+                        ),
+                        value: _numPasajeros,
+                        items:
+                            ['1', '2', '3', '4', '5', '6', '7', '8'].map((
+                              String value,
+                            ) {
+                              return DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(value),
+                              );
+                            }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _numPasajeros = value;
+                          });
+                        },
+                        validator:
+                            (value) =>
+                                value == null ? 'Seleccione un valor' : null,
                       ),
-                      value: _numPasajeros,
-                      items:
-                          ['1', '2', '3', '4', '5', '6', '7', '8'].map((
-                            String value,
-                          ) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(value),
-                            );
-                          }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _numPasajeros = value;
-                        });
-                      },
-                      validator:
-                          (value) =>
-                              value == null ? 'Seleccione un valor' : null,
-                    ),
-                    DropdownButtonFormField<String>(
-                      decoration: const InputDecoration(
-                        labelText: 'Número de Puertas',
+
+                    // Campo: Número de Puertas (solo si no es Moto)
+                    if (_categoria != 'Moto')
+                      DropdownButtonFormField<String>(
+                        decoration: const InputDecoration(
+                          labelText: 'Número de Puertas',
+                        ),
+                        value: _numPuertas,
+                        items:
+                            ['2', '3', '4', '5'].map((String value) {
+                              return DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(value),
+                              );
+                            }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _numPuertas = value;
+                          });
+                        },
+                        validator:
+                            (value) =>
+                                value == null ? 'Seleccione un valor' : null,
                       ),
-                      value: _numPuertas,
-                      items:
-                          ['2', '3', '4', '5'].map((String value) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(value),
-                            );
-                          }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _numPuertas = value;
-                        });
-                      },
-                      validator:
-                          (value) =>
-                              value == null ? 'Seleccione un valor' : null,
-                    ),
                     DropdownButtonFormField<String>(
                       decoration: const InputDecoration(
                         labelText: 'Tipo de Combustible',

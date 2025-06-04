@@ -88,6 +88,7 @@ class PaginaDescripcionVehiculo extends StatelessWidget {
 
           final data = snapshot.data!.data()!;
           final detalles = data['detalles'] ?? {};
+          final categoria = data['categoria']?.toString().toLowerCase() ?? '';
 
           return FutureBuilder<String>(
             future: obtenerTelefonoPropietario(data['Propietario']?.toString()),
@@ -173,23 +174,35 @@ class PaginaDescripcionVehiculo extends StatelessWidget {
                             spacing: 16,
                             runSpacing: 10,
                             children: [
-                              detalleIcono(
-                                Icons.person,
-                                '${detalles['#pasajeros'] ?? 'N/A'} Pasajeros',
-                              ),
-                              detalleIcono(Icons.ac_unit, 'Aire acondicionado'),
+                              // Mostrar #pasajeros solo si no es moto
+                              if (categoria != 'moto')
+                                detalleIcono(
+                                  Icons.person,
+                                  '${detalles['#pasajeros'] ?? 'N/A'} Pasajeros',
+                                ),
+                              // Mostrar aire acondicionado solo si no es moto
+                              if (categoria != 'moto')
+                                detalleIcono(
+                                  Icons.ac_unit,
+                                  'Aire acondicionado',
+                                ),
+                              // Siempre mostrar transmisión
                               detalleIcono(
                                 Icons.settings,
                                 detalles['transmision'] ?? 'Manual',
                               ),
-                              detalleIcono(
-                                Icons.door_front_door,
-                                '${detalles['puertas'] ?? 4} puertas',
-                              ),
+                              // Mostrar puertas solo si no es moto
+                              if (categoria != 'moto')
+                                detalleIcono(
+                                  Icons.door_front_door,
+                                  '${detalles['puertas'] ?? 4} puertas',
+                                ),
+                              // Siempre mostrar kilometraje ilimitado
                               detalleIcono(
                                 Icons.speed,
                                 'Kilometraje ilimitado',
                               ),
+                              // Siempre mostrar tipo de combustible
                               detalleIcono(
                                 Icons.local_gas_station,
                                 detalles['tipoCombustible'] ??
@@ -198,8 +211,6 @@ class PaginaDescripcionVehiculo extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 16),
-
-                          // Aquí el precio ocupando todo el ancho, sin botón de ubicación
                           Container(
                             width: double.infinity,
                             padding: const EdgeInsets.symmetric(
@@ -220,7 +231,6 @@ class PaginaDescripcionVehiculo extends StatelessWidget {
                               ),
                             ),
                           ),
-
                           const SizedBox(height: 16),
                           const Text(
                             'Datos propietario:',
@@ -229,7 +239,7 @@ class PaginaDescripcionVehiculo extends StatelessWidget {
                           Text(
                             'Nombre: ${data['Propietario'] ?? 'No disponible'}',
                           ),
-                          Text('Cel: $telefonoPropietario'),
+                          Text('telefono: $telefonoPropietario'),
                           const SizedBox(height: 16),
                           Center(
                             child: GestureDetector(
