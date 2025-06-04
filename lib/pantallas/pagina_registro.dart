@@ -153,6 +153,7 @@ class _RegistroPageState extends State<RegistroPage> {
           .collection('Usuarios')
           .doc(cred.user!.uid)
           .set({
+            'usuarioUid': cred.user!.uid,
             'nombre': nombre,
             'correo': correo,
             'telefono': telefono,

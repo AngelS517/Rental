@@ -1,7 +1,12 @@
+import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'pagina_principal.dart';
+import 'package:intl/intl.dart';
 
 class PaginaAlquilar extends StatefulWidget {
   final String placa;
@@ -13,16 +18,47 @@ class PaginaAlquilar extends StatefulWidget {
 }
 
 class _PaginaAlquilarState extends State<PaginaAlquilar> {
-  final nombreController = TextEditingController();
-  final correoController = TextEditingController();
   final nacionalidadController = TextEditingController();
-  final celularController = TextEditingController();
-  final tipoDocController = TextEditingController();
-  final noDocController = TextEditingController();
   final fechaRetiroController = TextEditingController();
   final fechaEntregaController = TextEditingController();
   bool proteccionTotal = false;
   bool autorizaDatos = false;
+
+  String nombreUsuario = '';
+  String correoUsuario = '';
+  String celularUsuario = '';
+  String documentoUsuario = '';
+  File? licenciaImagen;
+  late int precioPorDia;
+
+  final ImagePicker _picker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+    obtenerDatosUsuario();
+  }
+
+  Future<void> obtenerDatosUsuario() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final userDoc =
+          await FirebaseFirestore.instance
+              .collection('Usuarios')
+              .doc(user.uid)
+              .get();
+
+      final data = userDoc.data();
+      if (data != null) {
+        setState(() {
+          nombreUsuario = data['nombre'] ?? '';
+          correoUsuario = data['correo'] ?? '';
+          celularUsuario = data['telefono'] ?? '';
+          documentoUsuario = 'CC ${data['cedula'] ?? ''}';
+        });
+      }
+    }
+  }
 
   Future<DocumentSnapshot<Map<String, dynamic>>> obtenerVehiculo() async {
     final query =
@@ -33,9 +69,68 @@ class _PaginaAlquilarState extends State<PaginaAlquilar> {
             .get();
 
     if (query.docs.isNotEmpty) {
+      final data = query.docs.first.data();
+      precioPorDia = (data['precioPorDia'] as num?)?.toInt() ?? 0;
       return query.docs.first;
     } else {
       throw Exception('Vehículo no encontrado');
+    }
+  }
+
+  Future<void> seleccionarFechaYHora(TextEditingController controller) async {
+    final fecha = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2100),
+    );
+
+    if (fecha != null) {
+      final hora = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.now(),
+      );
+
+      if (hora != null) {
+        final fechaHora = DateTime(
+          fecha.year,
+          fecha.month,
+          fecha.day,
+          hora.hour,
+          hora.minute,
+        );
+        final formato = DateFormat('yyyy-MM-dd HH:mm');
+        controller.text = formato.format(fechaHora);
+      }
+    }
+  }
+
+  Future<void> seleccionarImagenLicencia() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      setState(() {
+        licenciaImagen = File(pickedFile.path);
+      });
+    }
+  }
+
+  Future<String> subirImagenACloudinary(File imagen) async {
+    final url = Uri.parse(
+      'https://api.cloudinary.com/v1_1/dzmcnktot/image/upload',
+    );
+    final request =
+        http.MultipartRequest('POST', url)
+          ..fields['upload_preset'] = 'Rental'
+          ..files.add(await http.MultipartFile.fromPath('file', imagen.path));
+
+    final response = await request.send();
+    if (response.statusCode == 200) {
+      final responseData = await http.Response.fromStream(response);
+      final jsonData = json.decode(responseData.body);
+      return jsonData['secure_url'];
+    } else {
+      throw Exception('Error al subir la imagen');
     }
   }
 
@@ -65,33 +160,48 @@ class _PaginaAlquilarState extends State<PaginaAlquilar> {
           appBar: AppBar(
             title: const Text('Formulario de Alquiler'),
             backgroundColor: const Color(0xFF4B4EAB),
+            foregroundColor:
+                Colors.white, // Color blanco para título e íconos del AppBar
           ),
+
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Center(
-                  child: Text(
-                    'Formulario de Alquiler',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF4B4EAB),
-                    ),
-                  ),
-                ),
+                const Center(),
                 const SizedBox(height: 20),
                 campoInfo('Vehículo a alquilar:', '$marca $modelo'),
                 campoInfo('Placa:', widget.placa),
-                campoTexto('Nombre completo:', nombreController),
-                campoTexto('Correo electrónico:', correoController),
+                campoInfo('Precio por día:', '\$${precioPorDia.toString()}'),
+                campoInfo('Nombre completo:', nombreUsuario),
+                campoInfo('Correo electrónico:', correoUsuario),
+                campoInfo('Celular:', celularUsuario),
+                campoInfo('Número de documento:', documentoUsuario),
                 campoTexto('Nacionalidad:', nacionalidadController),
-                campoTexto('Celular:', celularController),
-                campoTexto('Tipo documento:', tipoDocController),
-                campoTexto('No. Documento:', noDocController),
-                campoTexto('Fecha y hora del retiro:', fechaRetiroController),
-                campoTexto('Fecha y hora de entrega:', fechaEntregaController),
+                const SizedBox(height: 8),
+
+                // Caja para fecha de retiro con botón integrado
+                campoFecha('Fecha y hora de retiro:', fechaRetiroController),
+
+                // Caja para fecha de entrega con botón integrado
+                campoFecha('Fecha y hora de entrega:', fechaEntregaController),
+
+                const SizedBox(height: 8),
+
+                // Botón de subir imagen de licencia
+                ElevatedButton(
+                  onPressed: seleccionarImagenLicencia,
+                  child: const Text('Seleccionar foto de licencia de conducir'),
+                ),
+                if (licenciaImagen != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Image.file(licenciaImagen!, height: 150),
+                  ),
+
+                const SizedBox(height: 8),
+
                 Row(
                   children: [
                     Checkbox(
@@ -137,66 +247,80 @@ class _PaginaAlquilarState extends State<PaginaAlquilar> {
                     ),
                     onPressed: () async {
                       try {
+                        if (licenciaImagen == null) {
+                          throw Exception(
+                            'Debes seleccionar una foto de la licencia.',
+                          );
+                        }
+
+                        final fechaRetiro = DateFormat(
+                          'yyyy-MM-dd HH:mm',
+                        ).parse(fechaRetiroController.text.trim());
+                        final fechaEntrega = DateFormat(
+                          'yyyy-MM-dd HH:mm',
+                        ).parse(fechaEntregaController.text.trim());
+
+                        if (fechaRetiro.isAfter(fechaEntrega)) {
+                          throw Exception(
+                            'La fecha y hora de retiro debe ser menor a la de entrega',
+                          );
+                        }
+
                         final user = FirebaseAuth.instance.currentUser;
                         if (user == null) {
                           throw Exception('Usuario no autenticado');
                         }
 
-                        // Guardar en la colección 'Alquilar'
-                        await FirebaseFirestore.instance
-                            .collection('Alquilar')
-                            .add({
-                              'placa': widget.placa,
-                              'vehiculo': '$marca $modelo',
-                              'nombre': nombreController.text.trim(),
-                              'correo': correoController.text.trim(),
-                              'nacionalidad':
-                                  nacionalidadController.text.trim(),
-                              'celular': celularController.text.trim(),
-                              'tipoDocumento': tipoDocController.text.trim(),
-                              'numeroDocumento': noDocController.text.trim(),
-                              'fechaRetiro': fechaRetiroController.text.trim(),
-                              'fechaEntrega':
-                                  fechaEntregaController.text.trim(),
-                              'proteccionTotal': proteccionTotal,
-                              'autorizaDatos': autorizaDatos,
-                              'usuarioId': user.uid,
-                              'fechaRegistro': FieldValue.serverTimestamp(),
-                            });
+                        final urlLicencia = await subirImagenACloudinary(
+                          licenciaImagen!,
+                        );
 
-                        // Actualizar disponibilidad del vehículo
-                        final query =
+                        final total =
+                            proteccionTotal
+                                ? precioPorDia + 55000
+                                : precioPorDia;
+
+                        final alquilarRef = FirebaseFirestore.instance
+                            .collection('Alquilar')
+                            .doc(user.uid);
+
+                        await alquilarRef.set({
+                          'alquilados': FieldValue.arrayUnion([widget.placa]),
+                          'nombre': nombreUsuario,
+                          'usuarioUid': user.uid,
+                          'fechaRetiro': fechaRetiroController.text.trim(),
+                          'fechaEntrega': fechaEntregaController.text.trim(),
+                          'proteccionTotal': proteccionTotal,
+                          'autorizaDatos': autorizaDatos,
+                          'urlLicencia': urlLicencia,
+                          'fechaRegistro': FieldValue.serverTimestamp(),
+                        }, SetOptions(merge: true));
+
+                        final vehiculoQuery =
                             await FirebaseFirestore.instance
                                 .collection('Vehiculos')
                                 .where('placa', isEqualTo: widget.placa)
                                 .limit(1)
                                 .get();
 
-                        if (query.docs.isNotEmpty) {
-                          final docId = query.docs.first.id;
+                        if (vehiculoQuery.docs.isNotEmpty) {
+                          final docId = vehiculoQuery.docs.first.id;
                           await FirebaseFirestore.instance
                               .collection('Vehiculos')
                               .doc(docId)
                               .update({'disponible': false});
                         }
 
-                        // Agregar vehículo al usuario
-                        final userDocRef = FirebaseFirestore.instance
-                            .collection('usuarios')
+                        final historialRef = FirebaseFirestore.instance
+                            .collection('usuariosHistorial')
                             .doc(user.uid);
 
-                        final userDoc = await userDocRef.get();
-                        if (userDoc.exists) {
-                          await userDocRef.update({
-                            'alquilados': FieldValue.arrayUnion([widget.placa]),
-                          });
-                        } else {
-                          await userDocRef.set({
-                            'alquilados': [widget.placa],
-                          }, SetOptions(merge: true));
-                        }
+                        await historialRef.set({
+                          'alquilados': FieldValue.arrayUnion([widget.placa]),
+                          'nombre': nombreUsuario,
+                          'usuarioUid': user.uid,
+                        }, SetOptions(merge: true));
 
-                        // Mostrar éxito
                         showDialog(
                           context: context,
                           builder:
@@ -225,6 +349,14 @@ class _PaginaAlquilarState extends State<PaginaAlquilar> {
                                       ),
                                     ),
                                     const SizedBox(height: 12),
+                                    Text(
+                                      'Precio total: \$${total.toString()}',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
                                     const Text(
                                       'El vehículo que rentaste ya está disponible para ti.\n\nTen presente que los datos de tu renta y factura serán enviados a tu correo.',
                                       textAlign: TextAlign.center,
@@ -248,14 +380,14 @@ class _PaginaAlquilarState extends State<PaginaAlquilar> {
                               ),
                         );
                       } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Error al alquilar: $e')),
-                        );
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text('Error: $e')));
                       }
                     },
                     child: const Text(
                       'Alquilar vehículo',
-                      style: TextStyle(fontSize: 16),
+                      style: TextStyle(fontSize: 16, color: Colors.white),
                     ),
                   ),
                 ),
@@ -298,6 +430,38 @@ class _PaginaAlquilarState extends State<PaginaAlquilar> {
             fillColor: Color(0xFFEAEAEA),
             border: OutlineInputBorder(),
             contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          ),
+        ),
+        const SizedBox(height: 8),
+      ],
+    );
+  }
+
+  Widget campoFecha(String label, TextEditingController controller) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 4),
+        GestureDetector(
+          onTap: () => seleccionarFechaYHora(controller),
+          child: AbsorbPointer(
+            child: TextField(
+              controller: controller,
+              decoration: const InputDecoration(
+                filled: true,
+                fillColor: Color(0xFFEAEAEA),
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                suffixIcon: Icon(
+                  Icons.calendar_today,
+                  color: Color(0xFF4B4EAB),
+                ),
+              ),
+            ),
           ),
         ),
         const SizedBox(height: 8),

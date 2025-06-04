@@ -450,6 +450,8 @@ class _PublicadosProveedorState extends State<PublicadosProveedor> {
     final modelo = data['modelo']?.toString() ?? '';
     final precio = data['precioPorDia']?.toDouble() ?? 0.0;
     final numPasajeros = data['detalles']?['#pasajeros']?.toString() ?? 'N/A';
+    final categoria =
+        data['categoria']?.toString() ?? 'Categoría no disponible';
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -485,6 +487,10 @@ class _PublicadosProveedorState extends State<PublicadosProveedor> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 4),
+                Text(
+                  'Categoría: $categoria',
+                  style: const TextStyle(fontSize: 14),
+                ),
                 Text(
                   'Precio: \$${precio.toStringAsFixed(0)} COP/Día',
                   style: const TextStyle(fontSize: 14),
@@ -550,6 +556,7 @@ class _PublicadosProveedorState extends State<PublicadosProveedor> {
                   FirebaseFirestore.instance
                       .collection('Vehiculos')
                       .where('proveedorUid', isEqualTo: _uid)
+                      .where('disponible', isEqualTo: true)
                       .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -623,6 +630,7 @@ class _PublicadosProveedorState extends State<PublicadosProveedor> {
         },
         child: const Icon(Icons.add),
         backgroundColor: const Color(0xFF7B1FA2),
+        foregroundColor: Colors.white,
       ),
     );
   }

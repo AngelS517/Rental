@@ -347,12 +347,44 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
                   TextFormField(
                     controller: _placaController,
                     decoration: const InputDecoration(labelText: 'Placa'),
-                    validator:
-                        (value) =>
-                            value == null || value.isEmpty
-                                ? 'Campo requerido'
-                                : null,
+                    textCapitalization:
+                        TextCapitalization
+                            .characters, // Esto ayuda a teclado en mayúsculas
+                    onChanged: (value) {
+                      final newValue = value.toUpperCase();
+                      if (newValue != value) {
+                        _placaController.value = _placaController.value
+                            .copyWith(
+                              text: newValue,
+                              selection: TextSelection.collapsed(
+                                offset: newValue.length,
+                              ),
+                            );
+                      }
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty)
+                        return 'Campo requerido';
+
+                      if (value.length > 6)
+                        return 'La placa debe tener máximo 6 caracteres';
+
+                      // Validar que solo haya letras mayúsculas y números (sin espacios ni otros caracteres)
+                      final validChars = RegExp(r'^[A-Z0-9]+$');
+                      if (!validChars.hasMatch(value)) {
+                        return 'La placa solo puede contener letras mayúsculas y números, sin espacios';
+                      }
+
+                      final hasLetter = value.contains(RegExp(r'[A-Z]'));
+                      final hasNumber = value.contains(RegExp(r'[0-9]'));
+                      if (!hasLetter || !hasNumber) {
+                        return 'La placa debe contener al menos una letra y un número';
+                      }
+
+                      return null;
+                    },
                   ),
+
                   TextFormField(
                     controller: _precioController,
                     decoration: const InputDecoration(

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:rental/widgets/custom_widgets.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'pagina_mapa.dart';
 import 'pagina_favoritos.dart';
 import 'pagina_perfil.dart';
+import 'package:rental/widgets/custom_widgets.dart';
 
 class PaginaPrincipal extends StatefulWidget {
   const PaginaPrincipal({super.key});
@@ -16,16 +17,25 @@ class PaginaPrincipal extends StatefulWidget {
 class _PaginaPrincipalState extends State<PaginaPrincipal> {
   int _selectedIndex = 0;
 
+  late final Stream<QuerySnapshot<Map<String, dynamic>>> _ofertasStream;
+
   @override
   void initState() {
     super.initState();
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
-        statusBarColor:
-            Colors.transparent, // Hacer la barra de estado transparente para que el gradiente la cubra
+        statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
       ),
     );
+
+    // Inicializamos el stream con debounceTime
+    _ofertasStream = FirebaseFirestore.instance
+        .collection('Vehiculos')
+        .where('precioPorDia', isLessThan: 26000)
+        .where('disponible', isEqualTo: true)
+        .snapshots()
+        .debounceTime(const Duration(seconds: 1));
   }
 
   void _onItemTapped(int index) {
@@ -64,21 +74,15 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
                 'Minivan',
                 'Minivan',
               ),
-              categoriaItem(
-                context,
-                'imagenes/moto.png',
-                'Moto',
-                'Moto',
-              ),
+              categoriaItem(context, 'imagenes/moto.png', 'Moto', 'Moto'),
               categoriaItem(
                 context,
                 'imagenes/electricos.png',
-                'Electricos',
+                'Eléctricos',
                 'Electrico',
               ),
             ],
           ),
-          const SizedBox(height: 20),
           const SizedBox(height: 20),
           const Text(
             'Ofertas',
@@ -86,11 +90,7 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
           ),
           const SizedBox(height: 10),
           StreamBuilder(
-            stream:
-                FirebaseFirestore.instance
-                    .collection('Vehiculos')
-                    .where('precioPorDia', isLessThan: 26000)
-                    .snapshots(),
+            stream: _ofertasStream,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
@@ -107,24 +107,28 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
                 itemCount: vehiculos.length,
                 itemBuilder: (context, index) {
                   final v = vehiculos[index];
-                  final modelo = v['modelo'] != null
-                      ? v['modelo'].toString()
-                      : 'Modelo desconocido';
-                  final propietario = v['Propietario']?.toString() ?? 'Sin propietario';
-                  final precio = v['precioPorDia'] != null
-                      ? (v['precioPorDia'] is num
-                          ? (v['precioPorDia'] as num).toDouble()
-                          : 0.0)
-                      : 0.0;
-                  final imagenUrl = v.data().containsKey('imagen')
-                      ? v['imagen'].toString()
-                      : '';
-                  final marca = v.data().containsKey('marca')
-                      ? v['marca'].toString()
-                      : 'Marca desconocida';
-                  final placa = v.data().containsKey('placa')
-                      ? v['placa'].toString()
-                      : 'Sin placa';
+                  final modelo =
+                      v['modelo']?.toString() ?? 'Modelo desconocido';
+                  final propietario =
+                      v['Propietario']?.toString() ?? 'Sin propietario';
+                  final precio =
+                      v['precioPorDia'] != null
+                          ? (v['precioPorDia'] is num
+                              ? (v['precioPorDia'] as num).toDouble()
+                              : 0.0)
+                          : 0.0;
+                  final imagenUrl =
+                      v.data().containsKey('imagen')
+                          ? v['imagen'].toString()
+                          : '';
+                  final marca =
+                      v.data().containsKey('marca')
+                          ? v['marca'].toString()
+                          : 'Marca desconocida';
+                  final placa =
+                      v.data().containsKey('placa')
+                          ? v['placa'].toString()
+                          : 'Sin placa';
 
                   return ofertaItemFirestore(
                     propietario,
@@ -188,11 +192,21 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
     );
   }
 
-  Widget ofertaItemFirestore(String propietario, String modelo, double precio, String imagenUrl, String marca, String placa) {
-    final bool isValidUrl = imagenUrl.isNotEmpty && (imagenUrl.startsWith('http://') || imagenUrl.startsWith('https://'));
-    final modeloSinAnio = modelo.contains(' ')
-        ? modelo.substring(0, modelo.lastIndexOf(' '))
-        : modelo;
+  Widget ofertaItemFirestore(
+    String propietario,
+    String modelo,
+    double precio,
+    String imagenUrl,
+    String marca,
+    String placa,
+  ) {
+    final bool isValidUrl =
+        imagenUrl.isNotEmpty &&
+        (imagenUrl.startsWith('http://') || imagenUrl.startsWith('https://'));
+    final modeloSinAnio =
+        modelo.contains(' ')
+            ? modelo.substring(0, modelo.lastIndexOf(' '))
+            : modelo;
 
     return Card(
       elevation: 2,
@@ -200,17 +214,26 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
       child: Column(
         children: [
           ListTile(
-            leading: isValidUrl
-                ? Image.network(
-                    imagenUrl,
-                    width: 50,
-                    height: 50,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Icon(Icons.directions_car, size: 50, color: Colors.blue);
-                    },
-                  )
-                : const Icon(Icons.directions_car, size: 50, color: Colors.blue),
+            leading:
+                isValidUrl
+                    ? Image.network(
+                      imagenUrl,
+                      width: 50,
+                      height: 50,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(
+                          Icons.directions_car,
+                          size: 50,
+                          color: Colors.blue,
+                        );
+                      },
+                    )
+                    : const Icon(
+                      Icons.directions_car,
+                      size: 50,
+                      color: Colors.blue,
+                    ),
             title: Text(
               '$marca $modeloSinAnio',
               style: const TextStyle(fontWeight: FontWeight.bold),
@@ -228,12 +251,11 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
             padding: const EdgeInsets.all(8.0),
             child: ElevatedButton(
               onPressed: () {
-                print('Navegando a /descripcion con placa: $placa');
                 Navigator.pushNamed(
                   context,
                   '/descripcion',
                   arguments: {'placa': placa},
-                ).then((value) => print('Regresó de /descripcion'));
+                );
               },
               child: const Text('Ver más'),
             ),
@@ -249,7 +271,7 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
       0: 'Página Principal - Cliente',
       1: 'Mapa',
       2: 'Favoritos',
-      3: 'Mi Perfil'
+      3: 'Mi Perfil',
     };
 
     return Scaffold(
@@ -260,18 +282,12 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
           child: CircleAvatar(
             radius: 20,
             backgroundColor: Colors.white,
-            child: Image.asset(
-              'imagenes/logorental.png',
-              height: 36,
-            ),
+            child: Image.asset('imagenes/logorental.png', height: 36),
           ),
         ),
         title: Text(
           titles[_selectedIndex]!,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-          ),
+          style: const TextStyle(color: Colors.white, fontSize: 20),
         ),
         centerTitle: true,
         flexibleSpace: Container(

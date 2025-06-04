@@ -17,46 +17,87 @@ class _PaginaFavoritosState extends State<PaginaFavoritos> {
       throw Exception('Usuario no autenticado');
     }
 
-    final userDoc =
+    // Obtener placas alquiladas desde la colección Alquilar
+    final alquilarDoc =
         await FirebaseFirestore.instance
-            .collection('usuarios')
+            .collection('Alquilar')
             .doc(user.uid)
             .get();
 
-    final data = userDoc.data();
-    if (data == null || data['alquilados'] == null) {
-      return [];
+    final dataAlquilar = alquilarDoc.data();
+    List<dynamic> placasAlquiladas = [];
+    if (dataAlquilar != null && dataAlquilar['alquilados'] != null) {
+      placasAlquiladas = dataAlquilar['alquilados'];
     }
 
-    final List<dynamic> placasAlquiladas = data['alquilados'];
     if (placasAlquiladas.isEmpty) {
       return [];
     }
 
-    final query =
+    // Obtener los vehículos de la colección Vehiculos según las placas alquiladas
+    final vehiculosQuery =
         await FirebaseFirestore.instance
             .collection('Vehiculos')
             .where('placa', whereIn: placasAlquiladas)
             .get();
 
-    return query.docs.map((doc) => {...doc.data(), 'id': doc.id}).toList();
+    return vehiculosQuery.docs
+        .map((doc) => {...doc.data(), 'id': doc.id})
+        .toList();
   }
 
   Future<void> calificarVehiculo(String vehiculoId, int calificacion) async {
     final vehiculoRef = FirebaseFirestore.instance
         .collection('Vehiculos')
         .doc(vehiculoId);
-
     await vehiculoRef.update({'calificacion': calificacion});
+  }
+
+  Future<void> regresarVehiculo(String placa) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final vehiculoQuery =
+        await FirebaseFirestore.instance
+            .collection('Vehiculos')
+            .where('placa', isEqualTo: placa)
+            .get();
+
+    if (vehiculoQuery.docs.isEmpty) return;
+
+    final vehiculoDoc = vehiculoQuery.docs.first;
+
+    // Actualiza el campo 'disponible' en la colección Vehiculos
+    await vehiculoDoc.reference.update({'disponible': true});
+
+    // Elimina la placa del array 'alquilados' en la colección Alquilar
+    final alquilarRef = FirebaseFirestore.instance
+        .collection('Alquilar')
+        .doc(user.uid);
+    await alquilarRef.update({
+      'alquilados': FieldValue.arrayRemove([placa]),
+    });
+
+    // Refresca la vista
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Vehículos Alquilados'),
+        title: const Text(
+          'Vehículos Alquilados',
+          style: TextStyle(
+            color: Colors.white,
+          ), // Aquí das color blanco al título
+        ),
         backgroundColor: const Color(0xFF4B4EAB),
+        iconTheme: const IconThemeData(
+          color: Colors.white,
+        ), // Opcional: íconos también en blanco
       ),
+
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: obtenerVehiculosAlquilados(),
         builder: (context, snapshot) {
@@ -86,9 +127,9 @@ class _PaginaFavoritosState extends State<PaginaFavoritos> {
               final marca = vehiculo['marca'] ?? 'Desconocida';
               final modelo = vehiculo['modelo'] ?? 'Desconocido';
               final placa = vehiculo['placa'] ?? 'N/A';
+              final categoria = vehiculo['categoria'] ?? 'Sin categoría';
               final imagen =
                   vehiculo['imagen'] ?? 'https://via.placeholder.com/150';
-
               final int? calificacion =
                   (vehiculo['calificacion'] as num?)?.toInt();
 
@@ -110,33 +151,89 @@ class _PaginaFavoritosState extends State<PaginaFavoritos> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Placa: $placa'),
+                      Text('Categoría: $categoria'),
                       const SizedBox(height: 4),
-                      RatingBar.builder(
-                        initialRating: calificacion?.toDouble() ?? 0,
-                        minRating: 1,
-                        direction: Axis.horizontal,
-                        allowHalfRating: false,
-                        itemCount: 5,
-                        itemSize: 24,
-                        itemBuilder:
-                            (context, _) =>
-                                const Icon(Icons.star, color: Colors.amber),
-                        updateOnDrag: false,
-                        // Quitamos ignoreGestures para que el usuario pueda cambiar siempre
-                        onRatingUpdate: (rating) async {
-                          await calificarVehiculo(
-                            vehiculo['id'],
-                            rating.toInt(),
-                          );
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('¡Calificación guardada!'),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: RatingBar.builder(
+                              initialRating: calificacion?.toDouble() ?? 0,
+                              minRating: 1,
+                              direction: Axis.horizontal,
+                              allowHalfRating: false,
+                              itemCount: 5,
+                              itemSize: 24,
+                              itemBuilder:
+                                  (context, _) => const Icon(
+                                    Icons.star,
+                                    color: Colors.amber,
+                                  ),
+                              updateOnDrag: false,
+                              onRatingUpdate: (rating) async {
+                                await calificarVehiculo(
+                                  vehiculo['id'],
+                                  rating.toInt(),
+                                );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('¡Calificación guardada!'),
+                                  ),
+                                );
+                                setState(() {});
+                              },
                             ),
-                          );
-                          setState(
-                            () {},
-                          ); // Para refrescar y mostrar la nueva calificación
-                        },
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            onPressed: () async {
+                              final confirmar = await showDialog<bool>(
+                                context: context,
+                                builder: (context) {
+                                  return AlertDialog(
+                                    title: const Text('Confirmación'),
+                                    content: const Text(
+                                      '¿Estás seguro que quieres regresar el vehículo?',
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        child: const Text('Cancelar'),
+                                        onPressed:
+                                            () => Navigator.of(
+                                              context,
+                                            ).pop(false),
+                                      ),
+                                      TextButton(
+                                        child: const Text('Sí'),
+                                        onPressed:
+                                            () =>
+                                                Navigator.of(context).pop(true),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+
+                              if (confirmar == true) {
+                                await regresarVehiculo(placa);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Vehículo $placa regresado.'),
+                                  ),
+                                );
+                              }
+                              // Si el usuario cancela, no pasa nada
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF4B4EAB),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                            ),
+                            child: const Text('Devolver'),
+                          ),
+                        ],
                       ),
                     ],
                   ),

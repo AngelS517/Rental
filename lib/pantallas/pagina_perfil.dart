@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'login.dart'; // Pantalla de login
 import 'pagina_terminos.dart';
+import 'pagina_historial_Usuario.dart';
 
 class PaginaPerfilCliente extends StatefulWidget {
   final Map<String, dynamic>? preloadedUserData; // Datos precargados
@@ -597,7 +598,22 @@ class _PaginaPerfilClienteState extends State<PaginaPerfilCliente> {
                 ),
               ),
               const SizedBox(height: 30),
-              listTileItem(Icons.history, "Historial"),
+              ListTile(
+                leading: const Icon(Icons.history),
+                title: const Text("Historial"),
+                trailing: const Icon(
+                  Icons.keyboard_arrow_right,
+                  color: Colors.white,
+                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PaginaHistorialUsuario(),
+                    ),
+                  );
+                },
+              ),
               ListTile(
                 leading: const Icon(
                   Icons.description,
