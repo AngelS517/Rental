@@ -634,7 +634,7 @@ class _PublicadosProveedorState extends State<PublicadosProveedor> {
           }
         },
         child: const Icon(Icons.add),
-        backgroundColor: const Color(0xFF7B1FA2),
+        backgroundColor: const Color(0xFF7b43cd), // Changed to #7b43cd
         foregroundColor: Colors.white,
       ),
     );

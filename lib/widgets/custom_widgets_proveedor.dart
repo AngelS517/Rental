@@ -49,17 +49,9 @@ class CustomNavBar extends StatelessWidget {
           ),
           BottomNavigationBarItem(
             icon: Image.asset(
-              'imagenes/estadisticas.png',
-              height: 24,
-              color: selectedIndex == 2 ? Colors.white : Colors.white60,
-            ),
-            label: 'Estadisticas',
-          ),
-          BottomNavigationBarItem(
-            icon: Image.asset(
               'imagenes/perfil.png',
               height: 24,
-              color: selectedIndex == 3 ? Colors.white : Colors.white60,
+              color: selectedIndex == 2 ? Colors.white : Colors.white60,
             ),
             label: 'Perfil',
           ),

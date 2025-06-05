@@ -19,10 +19,7 @@ class _PaginaFavoritosState extends State<PaginaFavoritos> {
 
     // Obtener placas alquiladas desde la colección Alquilar
     final alquilarDoc =
-        await FirebaseFirestore.instance
-            .collection('Alquilar')
-            .doc(user.uid)
-            .get();
+        await FirebaseFirestore.instance.collection('Alquilar').doc(user.uid).get();
 
     final dataAlquilar = alquilarDoc.data();
     List<dynamic> placasAlquiladas = [];
@@ -35,21 +32,16 @@ class _PaginaFavoritosState extends State<PaginaFavoritos> {
     }
 
     // Obtener los vehículos de la colección Vehiculos según las placas alquiladas
-    final vehiculosQuery =
-        await FirebaseFirestore.instance
-            .collection('Vehiculos')
-            .where('placa', whereIn: placasAlquiladas)
-            .get();
+    final vehiculosQuery = await FirebaseFirestore.instance
+        .collection('Vehiculos')
+        .where('placa', whereIn: placasAlquiladas)
+        .get();
 
-    return vehiculosQuery.docs
-        .map((doc) => {...doc.data(), 'id': doc.id})
-        .toList();
+    return vehiculosQuery.docs.map((doc) => {...doc.data(), 'id': doc.id}).toList();
   }
 
   Future<void> calificarVehiculo(String vehiculoId, int calificacion) async {
-    final vehiculoRef = FirebaseFirestore.instance
-        .collection('Vehiculos')
-        .doc(vehiculoId);
+    final vehiculoRef = FirebaseFirestore.instance.collection('Vehiculos').doc(vehiculoId);
     await vehiculoRef.update({'calificacion': calificacion});
   }
 
@@ -57,11 +49,10 @@ class _PaginaFavoritosState extends State<PaginaFavoritos> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    final vehiculoQuery =
-        await FirebaseFirestore.instance
-            .collection('Vehiculos')
-            .where('placa', isEqualTo: placa)
-            .get();
+    final vehiculoQuery = await FirebaseFirestore.instance
+        .collection('Vehiculos')
+        .where('placa', isEqualTo: placa)
+        .get();
 
     if (vehiculoQuery.docs.isEmpty) return;
 
@@ -71,9 +62,7 @@ class _PaginaFavoritosState extends State<PaginaFavoritos> {
     await vehiculoDoc.reference.update({'disponible': true});
 
     // Elimina la placa del array 'alquilados' en la colección Alquilar
-    final alquilarRef = FirebaseFirestore.instance
-        .collection('Alquilar')
-        .doc(user.uid);
+    final alquilarRef = FirebaseFirestore.instance.collection('Alquilar').doc(user.uid);
     await alquilarRef.update({
       'alquilados': FieldValue.arrayRemove([placa]),
     });
@@ -85,19 +74,6 @@ class _PaginaFavoritosState extends State<PaginaFavoritos> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Vehículos Alquilados',
-          style: TextStyle(
-            color: Colors.white,
-          ), // Aquí das color blanco al título
-        ),
-        backgroundColor: const Color(0xFF4B4EAB),
-        iconTheme: const IconThemeData(
-          color: Colors.white,
-        ), // Opcional: íconos también en blanco
-      ),
-
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: obtenerVehiculosAlquilados(),
         builder: (context, snapshot) {
@@ -128,10 +104,8 @@ class _PaginaFavoritosState extends State<PaginaFavoritos> {
               final modelo = vehiculo['modelo'] ?? 'Desconocido';
               final placa = vehiculo['placa'] ?? 'N/A';
               final categoria = vehiculo['categoria'] ?? 'Sin categoría';
-              final imagen =
-                  vehiculo['imagen'] ?? 'https://via.placeholder.com/150';
-              final int? calificacion =
-                  (vehiculo['calificacion'] as num?)?.toInt();
+              final imagen = vehiculo['imagen'] ?? 'https://via.placeholder.com/150';
+              final int? calificacion = (vehiculo['calificacion'] as num?)?.toInt();
 
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -163,11 +137,10 @@ class _PaginaFavoritosState extends State<PaginaFavoritos> {
                               allowHalfRating: false,
                               itemCount: 5,
                               itemSize: 24,
-                              itemBuilder:
-                                  (context, _) => const Icon(
-                                    Icons.star,
-                                    color: Colors.amber,
-                                  ),
+                              itemBuilder: (context, _) => const Icon(
+                                Icons.star,
+                                color: Colors.amber,
+                              ),
                               updateOnDrag: false,
                               onRatingUpdate: (rating) async {
                                 await calificarVehiculo(
@@ -197,16 +170,11 @@ class _PaginaFavoritosState extends State<PaginaFavoritos> {
                                     actions: [
                                       TextButton(
                                         child: const Text('Cancelar'),
-                                        onPressed:
-                                            () => Navigator.of(
-                                              context,
-                                            ).pop(false),
+                                        onPressed: () => Navigator.of(context).pop(false),
                                       ),
                                       TextButton(
                                         child: const Text('Sí'),
-                                        onPressed:
-                                            () =>
-                                                Navigator.of(context).pop(true),
+                                        onPressed: () => Navigator.of(context).pop(true),
                                       ),
                                     ],
                                   );

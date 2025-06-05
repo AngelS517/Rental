@@ -327,9 +327,9 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
   @override
   Widget build(BuildContext context) {
     final Map<int, String> titles = {
-      0: 'Página Principal - Cliente',
+      0: 'Página Principal ',
       1: 'Mapa',
-      2: 'Favoritos',
+      2: 'Vehiculos Alquilados',
       3: 'Mi Perfil',
     };
 

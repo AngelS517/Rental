@@ -58,8 +58,7 @@ class _PaginaPrincipalProveedorState extends State<PaginaPrincipalProveedor> {
     final Map<int, String> titles = {
       0: 'Vehículos Rentados',
       1: 'Mis Vehículos Publicados',
-      2: 'Estadísticas',
-      3: 'Perfil',
+      2: 'Perfil',
     };
 
     return Scaffold(
@@ -88,13 +87,6 @@ class _PaginaPrincipalProveedorState extends State<PaginaPrincipalProveedor> {
               : _buildVehiculosNoDisponibles(),
 
           const PublicadosProveedor(),
-
-          const Center(
-            child: Text(
-              'Pantalla de Estadísticas',
-              style: TextStyle(fontSize: 24),
-            ),
-          ),
 
           const PaginaPerfilProveedor(),
         ],
@@ -195,11 +187,11 @@ class _PaginaPrincipalProveedorState extends State<PaginaPrincipalProveedor> {
                 ),
                 trailing: TextButton(
                   style: TextButton.styleFrom(
-                    backgroundColor: Color(0xFF5A1EFF), // Fondo morado
+                    backgroundColor: Color(0xFF5A1EFF),
                   ),
                   child: const Text(
                     'Ubicación',
-                    style: TextStyle(color: Colors.white), // Letras blancas
+                    style: TextStyle(color: Colors.white),
                   ),
                   onPressed: () {
                     Navigator.pushNamed(
@@ -217,7 +209,6 @@ class _PaginaPrincipalProveedorState extends State<PaginaPrincipalProveedor> {
     );
   }
 
-  /// Función para pintar las estrellas según la calificación (solo visualización)
   List<Widget> _buildEstrellas(double calificacion) {
     const totalEstrellas = 5;
     final estrellasLlenas = calificacion.floor();

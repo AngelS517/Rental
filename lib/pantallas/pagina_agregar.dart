@@ -51,10 +51,7 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
   Future<void> _cargarNombrePropietario() async {
     try {
       final userDoc =
-          await FirebaseFirestore.instance
-              .collection('Usuarios')
-              .doc(_proveedorUid)
-              .get();
+          await FirebaseFirestore.instance.collection('Usuarios').doc(_proveedorUid).get();
       if (userDoc.exists && userDoc.data() != null) {
         setState(() {
           _propietario = userDoc.data()?['nombre'] ?? 'Proveedor desconocido';
@@ -84,15 +81,10 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
         return null;
       }
 
-      var uri = Uri.parse(
-        'https://api.cloudinary.com/v1_1/dzmcnktot/image/upload',
-      );
-      var request =
-          http.MultipartRequest('POST', uri)
-            ..fields['upload_preset'] = 'Rental'
-            ..files.add(
-              await http.MultipartFile.fromPath('file', imageFile.path),
-            );
+      var uri = Uri.parse('https://api.cloudinary.com/v1_1/dzmcnktot/image/upload');
+      var request = http.MultipartRequest('POST', uri)
+        ..fields['upload_preset'] = 'Rental'
+        ..files.add(await http.MultipartFile.fromPath('file', imageFile.path));
 
       var response = await request.send().timeout(
         const Duration(seconds: 30),
@@ -114,9 +106,7 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
             print('Error: secure_url is null or empty');
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text(
-                  'Error: No se recibió una URL válida de la imagen.',
-                ),
+                content: Text('Error: No se recibió una URL válida de la imagen.'),
               ),
             );
             return null;
@@ -133,21 +123,16 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
       } else {
         var responseData = await response.stream.bytesToString();
         print('Upload Error: ${response.statusCode} - $responseData');
-        if (response.statusCode == 400 &&
-            responseData.contains('whitelisted')) {
+        if (response.statusCode == 400 && responseData.contains('whitelisted')) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text(
-                'Error: Configura el upload preset "Rental" como Unsigned en Cloudinary.',
-              ),
+              content: Text('Error: Configura el upload preset "Rental" como Unsigned en Cloudinary.'),
             ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                'Error al subir la imagen: Código ${response.statusCode}',
-              ),
+              content: Text('Error al subir la imagen: Código ${response.statusCode}'),
             ),
           );
         }
@@ -155,9 +140,7 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
       }
     } catch (e) {
       print('Upload Exception: $e');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error al subir la imagen: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al subir la imagen: $e')));
       return null;
     }
   }
@@ -172,16 +155,13 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
   }
 
   Future<void> _registrarVehiculo() async {
-    if (_formKey.currentState!.validate() &&
-        _propietario != null &&
-        _proveedorUid != null) {
+    if (_formKey.currentState!.validate() && _propietario != null && _proveedorUid != null) {
       try {
         // Verificar si la placa ya está registrada
-        final placaExistente =
-            await FirebaseFirestore.instance
-                .collection('Vehiculos')
-                .where('placa', isEqualTo: _placaController.text)
-                .get();
+        final placaExistente = await FirebaseFirestore.instance
+            .collection('Vehiculos')
+            .where('placa', isEqualTo: _placaController.text)
+            .get();
 
         if (placaExistente.docs.isNotEmpty) {
           // Mostrar mensaje si la placa ya está registrada
@@ -233,9 +213,7 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
               'disponible': true,
             });
 
-        print(
-          'Vehículo registrado con ID: ${docRef.id}, Imagen URL: $imageUrl',
-        );
+        print('Vehículo registrado con ID: ${docRef.id}, Imagen URL: $imageUrl');
 
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -244,9 +222,7 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
           Navigator.pop(context);
         }
       } catch (e) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error al registrar: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al registrar: $e')));
       }
     }
   }
@@ -254,12 +230,21 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF050272), // Blue background as requested
       body: Center(
         child: AlertDialog(
+          backgroundColor: const Color(0xFFF5F5F5), // Light gray background like the image, kept as white-like
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Registrar Vehículo'),
+              const Text(
+                'Agregar Vehículo',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF4B4EAB), // Dark blue from the image
+                ),
+              ),
               const SizedBox(height: 8),
               Text(
                 'Propietario: ${_propietario ?? 'Cargando...'}',
@@ -277,97 +262,121 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  const SizedBox(height: 16), // Added spacing to match layout
                   TextFormField(
                     controller: _ciudadController,
-                    decoration: const InputDecoration(labelText: 'Ciudad'),
-                    validator:
-                        (value) =>
-                            value == null || value.isEmpty
-                                ? 'Campo requerido'
-                                : null,
+                    decoration: const InputDecoration(
+                      labelText: 'Ciudad',
+                      filled: true,
+                      fillColor: Color(0xFFF0F0F0), // Light gray fill
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                      ),
+                    ),
+                    validator: (value) => value == null || value.isEmpty ? 'Campo requerido' : null,
                   ),
+                  const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
-                    decoration: const InputDecoration(labelText: 'Categoría'),
+                    decoration: const InputDecoration(
+                      labelText: 'Categoría',
+                      filled: true,
+                      fillColor: Color(0xFFF0F0F0), // Light gray fill
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                      ),
+                    ),
                     value: _selectedCategory,
-                    items:
-                        ['Automovil', 'Moto', 'Electrico', 'Minivan'].map((
-                          String value,
-                        ) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(value),
-                          );
-                        }).toList(),
+                    items: ['Automovil', 'Moto', 'Electrico', 'Minivan'].map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
                     onChanged: (value) {
                       setState(() {
                         _selectedCategory = value;
                       });
                     },
-                    validator:
-                        (value) =>
-                            value == null ? 'Seleccione una categoría' : null,
+                    validator: (value) => value == null ? 'Seleccione una categoría' : null,
                   ),
+                  const SizedBox(height: 16),
                   TextFormField(
                     controller: _descripcionController,
-                    decoration: const InputDecoration(labelText: 'Descripción'),
-                    validator:
-                        (value) =>
-                            value == null || value.isEmpty
-                                ? 'Campo requerido'
-                                : null,
+                    decoration: const InputDecoration(
+                      labelText: 'Descripción',
+                      filled: true,
+                      fillColor: Color(0xFFF0F0F0), // Light gray fill
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                      ),
+                    ),
+                    validator: (value) => value == null || value.isEmpty ? 'Campo requerido' : null,
                   ),
+                  const SizedBox(height: 16),
                   TextFormField(
                     controller: _direccionController,
-                    decoration: const InputDecoration(labelText: 'Dirección'),
-                    validator:
-                        (value) =>
-                            value == null || value.isEmpty
-                                ? 'Campo requerido'
-                                : null,
+                    decoration: const InputDecoration(
+                      labelText: 'Dirección',
+                      filled: true,
+                      fillColor: Color(0xFFF0F0F0), // Light gray fill
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                      ),
+                    ),
+                    validator: (value) => value == null || value.isEmpty ? 'Campo requerido' : null,
                   ),
+                  const SizedBox(height: 16),
                   TextFormField(
                     controller: _marcaController,
-                    decoration: const InputDecoration(labelText: 'Marca'),
-                    validator:
-                        (value) =>
-                            value == null || value.isEmpty
-                                ? 'Campo requerido'
-                                : null,
+                    decoration: const InputDecoration(
+                      labelText: 'Marca',
+                      filled: true,
+                      fillColor: Color(0xFFF0F0F0), // Light gray fill
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                      ),
+                    ),
+                    validator: (value) => value == null || value.isEmpty ? 'Campo requerido' : null,
                   ),
+                  const SizedBox(height: 16),
                   TextFormField(
                     controller: _modeloController,
-                    decoration: const InputDecoration(labelText: 'Modelo'),
+                    decoration: const InputDecoration(
+                      labelText: 'Modelo',
+                      filled: true,
+                      fillColor: Color(0xFFF0F0F0), // Light gray fill
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                      ),
+                    ),
                     keyboardType: TextInputType.number,
-                    validator:
-                        (value) =>
-                            value == null || value.isEmpty
-                                ? 'Campo requerido'
-                                : null,
+                    validator: (value) => value == null || value.isEmpty ? 'Campo requerido' : null,
                   ),
+                  const SizedBox(height: 16),
                   TextFormField(
                     controller: _placaController,
-                    decoration: const InputDecoration(labelText: 'Placa'),
-                    textCapitalization:
-                        TextCapitalization
-                            .characters, // Esto ayuda a teclado en mayúsculas
+                    decoration: const InputDecoration(
+                      labelText: 'Placa',
+                      filled: true,
+                      fillColor: Color(0xFFF0F0F0), // Light gray fill
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                      ),
+                    ),
+                    textCapitalization: TextCapitalization.characters, // Esto ayuda a teclado en mayúsculas
                     onChanged: (value) {
                       final newValue = value.toUpperCase();
                       if (newValue != value) {
-                        _placaController.value = _placaController.value
-                            .copyWith(
-                              text: newValue,
-                              selection: TextSelection.collapsed(
-                                offset: newValue.length,
-                              ),
-                            );
+                        _placaController.value = _placaController.value.copyWith(
+                          text: newValue,
+                          selection: TextSelection.collapsed(offset: newValue.length),
+                        );
                       }
                     },
                     validator: (value) {
-                      if (value == null || value.isEmpty)
-                        return 'Campo requerido';
+                      if (value == null || value.isEmpty) return 'Campo requerido';
 
-                      if (value.length > 6)
-                        return 'La placa debe tener máximo 6 caracteres';
+                      if (value.length > 6) return 'La placa debe tener máximo 6 caracteres';
 
                       // Validar que solo haya letras mayúsculas y números (sin espacios ni otros caracteres)
                       final validChars = RegExp(r'^[A-Z0-9]+$');
@@ -384,158 +393,169 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
                       return null;
                     },
                   ),
-
+                  const SizedBox(height: 16),
                   TextFormField(
                     controller: _precioController,
                     decoration: const InputDecoration(
                       labelText: 'Precio por Día',
+                      filled: true,
+                      fillColor: Color(0xFFF0F0F0), // Light gray fill
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                      ),
                     ),
                     keyboardType: TextInputType.number,
-                    validator:
-                        (value) =>
-                            value == null || value.isEmpty
-                                ? 'Campo requerido'
-                                : null,
+                    validator: (value) => value == null || value.isEmpty ? 'Campo requerido' : null,
                   ),
-                  const Text('Detalles:'),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Detalles:',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF4B4EAB), // Dark blue for consistency
+                    ),
+                  ),
                   // Campo: Número de Pasajeros
                   if (_selectedCategory != 'Moto')
                     DropdownButtonFormField<String>(
                       decoration: const InputDecoration(
                         labelText: 'Número de Pasajeros',
+                        filled: true,
+                        fillColor: Color(0xFFF0F0F0), // Light gray fill
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(12)),
+                        ),
                       ),
                       value: _numPasajeros,
-                      items:
-                          (_selectedCategory == 'Minivan'
-                                  ? ['1', '2', '3', '4', '5', '6', '7', '8']
-                                  : ['1', '2', '3', '4'])
-                              .map(
-                                (String value) => DropdownMenuItem<String>(
-                                  value: value,
-                                  child: Text(value),
-                                ),
-                              )
-                              .toList(),
+                      items: (_selectedCategory == 'Minivan' ? ['1', '2', '3', '4', '5', '6', '7', '8'] : ['1', '2', '3', '4'])
+                          .map((String value) => DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(value),
+                              ))
+                          .toList(),
                       onChanged: (value) {
                         setState(() {
                           _numPasajeros = value;
                         });
                       },
-                      validator:
-                          (value) =>
-                              value == null ? 'Seleccione un valor' : null,
+                      validator: (value) => value == null ? 'Seleccione un valor' : null,
                     ),
-
+                  const SizedBox(height: 16),
                   // Campo: Número de Puertas
                   if (_selectedCategory != 'Moto')
                     DropdownButtonFormField<String>(
                       decoration: const InputDecoration(
                         labelText: 'Número de Puertas',
+                        filled: true,
+                        fillColor: Color(0xFFF0F0F0), // Light gray fill
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(12)),
+                        ),
                       ),
                       value: _numPuertas,
-                      items:
-                          ['2', '3', '4', '5'].map((String value) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(value),
-                            );
-                          }).toList(),
+                      items: ['2', '3', '4', '5'].map((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList(),
                       onChanged: (value) {
                         setState(() {
                           _numPuertas = value;
                         });
                       },
-                      validator:
-                          (value) =>
-                              value == null ? 'Seleccione un valor' : null,
+                      validator: (value) => value == null ? 'Seleccione un valor' : null,
                     ),
-
+                  const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     decoration: const InputDecoration(
                       labelText: 'Tipo de Combustible',
+                      filled: true,
+                      fillColor: Color(0xFFF0F0F0), // Light gray fill
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                      ),
                     ),
                     value: _tipoCombustible,
-                    items:
-                        _selectedCategory == 'Electrico'
-                            ? []
-                            : ['Corriente', 'ACP', 'Gas'].map((String value) {
-                              return DropdownMenuItem<String>(
-                                value: value,
-                                child: Text(value),
-                              );
-                            }).toList(),
-                    onChanged:
-                        _selectedCategory == 'Electrico'
-                            ? null
-                            : (value) {
-                              setState(() {
-                                _tipoCombustible = value;
-                              });
-                            },
-                    validator:
-                        _selectedCategory == 'Electrico'
-                            ? null
-                            : (value) =>
-                                value == null ? 'Seleccione un valor' : null,
+                    items: _selectedCategory == 'Electrico'
+                        ? []
+                        : ['Corriente', 'ACP', 'Gas'].map((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                    onChanged: _selectedCategory == 'Electrico' ? null : (value) {
+                      setState(() {
+                        _tipoCombustible = value;
+                      });
+                    },
+                    validator: _selectedCategory == 'Electrico' ? null : (value) => value == null ? 'Seleccione un valor' : null,
                   ),
+                  const SizedBox(height: 16),
                   CheckboxListTile(
                     title: const Text(
                       'Ventilación (Aire Acondicionado/Ventilador)',
+                      style: TextStyle(color: Colors.black87),
                     ),
                     value: _ventilacionChecked,
-                    onChanged:
-                        (value) => setState(() => _ventilacionChecked = value!),
+                    onChanged: (value) => setState(() => _ventilacionChecked = value!),
                   ),
+                  const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
-                    decoration: const InputDecoration(labelText: 'Kilometraje'),
+                    decoration: const InputDecoration(
+                      labelText: 'Kilometraje',
+                      filled: true,
+                      fillColor: Color(0xFFF0F0F0), // Light gray fill
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                      ),
+                    ),
                     value: _kilometrajeType,
-                    items:
-                        ['Limitado', 'Ilimitado', 'No aplica'].map((
-                          String value,
-                        ) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(value),
-                          );
-                        }).toList(),
+                    items: ['Limitado', 'Ilimitado', 'No aplica'].map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
                     onChanged: (value) {
                       setState(() {
                         _kilometrajeType = value;
                       });
                     },
-                    validator:
-                        (value) => value == null ? 'Seleccione un valor' : null,
+                    validator: (value) => value == null ? 'Seleccione un valor' : null,
                   ),
+                  const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     decoration: const InputDecoration(
                       labelText: 'Tipo de Transmisión',
+                      filled: true,
+                      fillColor: Color(0xFFF0F0F0), // Light gray fill
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                      ),
                     ),
                     value: _tipoTransmision,
-                    items:
-                        ['Automático', 'Semiautomático', 'Mecánico'].map((
-                          String value,
-                        ) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(value),
-                          );
-                        }).toList(),
+                    items: ['Automático', 'Semiautomático', 'Mecánico'].map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
                     onChanged: (value) {
                       setState(() {
                         _tipoTransmision = value;
                       });
                     },
-                    validator:
-                        (value) => value == null ? 'Seleccione un valor' : null,
+                    validator: (value) => value == null ? 'Seleccione un valor' : null,
                   ),
+                  const SizedBox(height: 16),
                   // Campo para seleccionar imagen
                   ListTile(
-                    leading: const Icon(Icons.image),
-                    title: const Text('Seleccionar Imagen'),
-                    subtitle:
-                        _imageFile != null
-                            ? const Text('Imagen seleccionada')
-                            : const Text('Sin imagen seleccionada'),
+                    leading: const Icon(Icons.image, color: Color(0xFF4B4EAB)),
+                    title: const Text('Seleccionar Imagen', style: TextStyle(color: Color(0xFF4B4EAB))),
+                    subtitle: _imageFile != null ? const Text('Imagen seleccionada', style: TextStyle(color: Colors.black87)) : const Text('Sin imagen seleccionada', style: TextStyle(color: Colors.black87)),
                     onTap: _pickImage,
                   ),
                   if (_imageFile != null)
@@ -554,11 +574,12 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
           ),
           actions: [
             TextButton(
-              child: const Text('Cancelar'),
+              child: const Text('Cancelar', style: TextStyle(color: Color(0xFF4B4EAB))),
               onPressed: () => Navigator.of(context).pop(),
             ),
             ElevatedButton(
-              child: const Text('Registrar'),
+              style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF4B4EAB)),
+              child: const Text('Registrar', style: TextStyle(color: Colors.white)),
               onPressed: _registrarVehiculo,
             ),
           ],
