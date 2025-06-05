@@ -6,7 +6,7 @@ class PaginaDescripcionVehiculo extends StatelessWidget {
   final String placa;
 
   const PaginaDescripcionVehiculo({Key? key, required this.placa})
-    : super(key: key);
+      : super(key: key);
 
   Future<DocumentSnapshot<Map<String, dynamic>>> obtenerVehiculo() async {
     final query =
@@ -92,6 +92,17 @@ class PaginaDescripcionVehiculo extends StatelessWidget {
           final propietarioNombre = data['Propietario'] ?? 'No disponible';
           final proveedorUid = data['proveedorUid']?.toString();
 
+          // Handle imagen as either a String or List<dynamic>
+          dynamic imagen = data['imagen'];
+          List<String> imagenes;
+          if (imagen is String) {
+            imagenes = imagen.isNotEmpty ? [imagen] : [];
+          } else if (imagen is List<dynamic>) {
+            imagenes = imagen.whereType<String>().toList();
+          } else {
+            imagenes = [];
+          }
+
           return FutureBuilder<String>(
             future: obtenerTelefonoProveedor(proveedorUid),
             builder: (context, telefonoSnapshot) {
@@ -115,15 +126,66 @@ class PaginaDescripcionVehiculo extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: Image.network(
-                              data['imagen'] ?? '',
-                              height: 180,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
+                          // Image Gallery with PageView
+                          imagenes.isNotEmpty
+                              ? Stack(
+                                  children: [
+                                    Container(
+                                      height: 180,
+                                      width: double.infinity,
+                                      child: PageView.builder(
+                                        itemCount: imagenes.length,
+                                        itemBuilder: (context, index) {
+                                          return ClipRRect(
+                                            borderRadius: BorderRadius.circular(10),
+                                            child: Image.network(
+                                              imagenes[index],
+                                              height: 180,
+                                              width: double.infinity,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (context, error, stackTrace) {
+                                                return Container(
+                                                  height: 180,
+                                                  width: double.infinity,
+                                                  color: Colors.grey[300],
+                                                  child: const Center(
+                                                    child: Icon(
+                                                      Icons.image_not_supported,
+                                                      size: 50,
+                                                      color: Colors.grey,
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    // Dots indicator for images
+                                    Positioned(
+                                      bottom: 8,
+                                      left: 0,
+                                      right: 0,
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: List.generate(
+                                          imagenes.length,
+                                          (index) => Container(
+                                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                                            width: 8,
+                                            height: 8,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: Colors.white.withOpacity(0.8),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : Container(
                                   height: 180,
                                   width: double.infinity,
                                   color: Colors.grey[300],
@@ -134,10 +196,7 @@ class PaginaDescripcionVehiculo extends StatelessWidget {
                                       color: Colors.grey,
                                     ),
                                   ),
-                                );
-                              },
-                            ),
-                          ),
+                                ),
                           const SizedBox(height: 16),
                           Center(
                             child: Text(

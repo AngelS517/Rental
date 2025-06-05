@@ -179,7 +179,7 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                       data['modelo']?.toString() ?? '',
                       data['precioPorDia']?.toDouble() ?? 0.0,
                       data['Propietario']?.toString() ?? 'Desconocido',
-                      data['imagen']?.toString() ?? '',
+                      data['imagen'], // Pasamos el campo imagen directamente
                       data['direccion']?.toString() ?? 'No disponible',
                       data['ciudad']?.toString() ?? 'Ciudad desconocida',
                       data['detalles']?['tipoCombustible']?.toString() ??
@@ -200,7 +200,7 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
           Container(
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF0D47A1), Color(0xFF7B1FA2)], // Azul a morado
+                colors: [Color(0xFF0D47A1), Color(0xFF7B1FA2)],
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
               ),
@@ -218,7 +218,6 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                     ),
                   );
                 },
-
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     vertical: 12,
@@ -252,7 +251,7 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
     String modelo,
     double precioPorDia,
     String propietario,
-    String imagenUrl,
+    dynamic imagen, // Cambiado a dynamic para manejar String o List
     String direccion,
     String ciudad,
     String tipoCombustible,
@@ -262,6 +261,19 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
     String placa,
     Function(double)? onRatingSelected,
   ) {
+    // Manejar imagen como String o List<dynamic>
+    String imagenUrl;
+    if (imagen is String) {
+      imagenUrl = imagen;
+    } else if (imagen is List<dynamic>) {
+      imagenUrl = imagen.isNotEmpty ? imagen[0]?.toString() ?? '' : '';
+    } else {
+      imagenUrl = '';
+    }
+
+    final bool isValidUrl = imagenUrl.isNotEmpty &&
+        (imagenUrl.startsWith('http://') || imagenUrl.startsWith('https://'));
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 4,
@@ -276,24 +288,35 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10),
-                  child: Image.network(
-                    imagenUrl,
-                    width: 90,
-                    height: 90,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        width: 90,
-                        height: 90,
-                        color: Colors.grey[300],
-                        child: const Icon(
-                          Icons.image_not_supported,
-                          size: 50,
-                          color: Colors.grey,
+                  child: isValidUrl
+                      ? Image.network(
+                          imagenUrl,
+                          width: 90,
+                          height: 90,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              width: 90,
+                              height: 90,
+                              color: Colors.grey[300],
+                              child: const Icon(
+                                Icons.image_not_supported,
+                                size: 50,
+                                color: Colors.grey,
+                              ),
+                            );
+                          },
+                        )
+                      : Container(
+                          width: 90,
+                          height: 90,
+                          color: Colors.grey[300],
+                          child: const Icon(
+                            Icons.image_not_supported,
+                            size: 50,
+                            color: Colors.grey,
+                          ),
                         ),
-                      );
-                    },
-                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(

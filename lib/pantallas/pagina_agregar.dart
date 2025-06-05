@@ -31,7 +31,7 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
   bool _ventilacionChecked = false;
   String? _kilometrajeType;
   String? _proveedorUid;
-  File? _imageFile; // Para almacenar la imagen seleccionada
+  List<File?> _imageFiles = [null, null, null]; // Array for up to 3 images
 
   final ImagePicker _picker = ImagePicker();
 
@@ -145,12 +145,14 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
     }
   }
 
-  Future<void> _pickImage() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _imageFile = File(pickedFile.path);
-      });
+  Future<void> _pickImage(int index) async {
+    if (index >= 0 && index < 3) {
+      final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        setState(() {
+          _imageFiles[index] = File(pickedFile.path);
+        });
+      }
     }
   }
 
@@ -173,16 +175,20 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
           return; // Detener el registro
         }
 
-        String? imageUrl;
-        if (_imageFile != null) {
-          imageUrl = await _uploadImageToCloudinary(_imageFile!);
-          if (imageUrl == null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Fallo al subir la imagen. Intenta de nuevo.'),
-              ),
-            );
-            return;
+        List<String?> imageUrls = [];
+        for (var imageFile in _imageFiles) {
+          if (imageFile != null) {
+            final url = await _uploadImageToCloudinary(imageFile);
+            if (url != null) {
+              imageUrls.add(url);
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Fallo al subir una de las imágenes. Intenta de nuevo.'),
+                ),
+              );
+              return;
+            }
           }
         }
 
@@ -209,11 +215,11 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
               'placa': _placaController.text,
               'precioPorDia': double.tryParse(_precioController.text) ?? 0.0,
               'proveedorUid': _proveedorUid,
-              'imagen': imageUrl,
+              'imagen': imageUrls.isNotEmpty ? imageUrls : null, // Store as array
               'disponible': true,
             });
 
-        print('Vehículo registrado con ID: ${docRef.id}, Imagen URL: $imageUrl');
+        print('Vehículo registrado con ID: ${docRef.id}, Imagen URLs: $imageUrls');
 
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -363,7 +369,7 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
                         borderRadius: BorderRadius.all(Radius.circular(12)),
                       ),
                     ),
-                    textCapitalization: TextCapitalization.characters, // Esto ayuda a teclado en mayúsculas
+                    textCapitalization: TextCapitalization.characters,
                     onChanged: (value) {
                       final newValue = value.toUpperCase();
                       if (newValue != value) {
@@ -378,7 +384,6 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
 
                       if (value.length > 6) return 'La placa debe tener máximo 6 caracteres';
 
-                      // Validar que solo haya letras mayúsculas y números (sin espacios ni otros caracteres)
                       final validChars = RegExp(r'^[A-Z0-9]+$');
                       if (!validChars.hasMatch(value)) {
                         return 'La placa solo puede contener letras mayúsculas y números, sin espacios';
@@ -399,7 +404,7 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
                     decoration: const InputDecoration(
                       labelText: 'Precio por Día',
                       filled: true,
-                      fillColor: Color(0xFFF0F0F0), // Light gray fill
+                      fillColor: Color(0xFFF0F0F0),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.all(Radius.circular(12)),
                       ),
@@ -413,16 +418,15 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF4B4EAB), // Dark blue for consistency
+                      color: Color(0xFF4B4EAB),
                     ),
                   ),
-                  // Campo: Número de Pasajeros
                   if (_selectedCategory != 'Moto')
                     DropdownButtonFormField<String>(
                       decoration: const InputDecoration(
                         labelText: 'Número de Pasajeros',
                         filled: true,
-                        fillColor: Color(0xFFF0F0F0), // Light gray fill
+                        fillColor: Color(0xFFF0F0F0),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.all(Radius.circular(12)),
                         ),
@@ -442,13 +446,12 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
                       validator: (value) => value == null ? 'Seleccione un valor' : null,
                     ),
                   const SizedBox(height: 16),
-                  // Campo: Número de Puertas
                   if (_selectedCategory != 'Moto')
                     DropdownButtonFormField<String>(
                       decoration: const InputDecoration(
                         labelText: 'Número de Puertas',
                         filled: true,
-                        fillColor: Color(0xFFF0F0F0), // Light gray fill
+                        fillColor: Color(0xFFF0F0F0),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.all(Radius.circular(12)),
                         ),
@@ -472,7 +475,7 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
                     decoration: const InputDecoration(
                       labelText: 'Tipo de Combustible',
                       filled: true,
-                      fillColor: Color(0xFFF0F0F0), // Light gray fill
+                      fillColor: Color(0xFFF0F0F0),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.all(Radius.circular(12)),
                       ),
@@ -507,7 +510,7 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
                     decoration: const InputDecoration(
                       labelText: 'Kilometraje',
                       filled: true,
-                      fillColor: Color(0xFFF0F0F0), // Light gray fill
+                      fillColor: Color(0xFFF0F0F0),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.all(Radius.circular(12)),
                       ),
@@ -531,7 +534,7 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
                     decoration: const InputDecoration(
                       labelText: 'Tipo de Transmisión',
                       filled: true,
-                      fillColor: Color(0xFFF0F0F0), // Light gray fill
+                      fillColor: Color(0xFFF0F0F0),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.all(Radius.circular(12)),
                       ),
@@ -551,18 +554,50 @@ class _PaginaAgregarState extends State<PaginaAgregar> {
                     validator: (value) => value == null ? 'Seleccione un valor' : null,
                   ),
                   const SizedBox(height: 16),
-                  // Campo para seleccionar imagen
+                  // Campos para seleccionar hasta 3 imágenes
                   ListTile(
                     leading: const Icon(Icons.image, color: Color(0xFF4B4EAB)),
-                    title: const Text('Seleccionar Imagen', style: TextStyle(color: Color(0xFF4B4EAB))),
-                    subtitle: _imageFile != null ? const Text('Imagen seleccionada', style: TextStyle(color: Colors.black87)) : const Text('Sin imagen seleccionada', style: TextStyle(color: Colors.black87)),
-                    onTap: _pickImage,
+                    title: const Text('Seleccionar Imagen 1', style: TextStyle(color: Color(0xFF4B4EAB))),
+                    subtitle: _imageFiles[0] != null ? const Text('Imagen seleccionada', style: TextStyle(color: Colors.black87)) : const Text('Sin imagen seleccionada', style: TextStyle(color: Colors.black87)),
+                    onTap: () => _pickImage(0),
                   ),
-                  if (_imageFile != null)
+                  if (_imageFiles[0] != null)
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Image.file(
-                        _imageFile!,
+                        _imageFiles[0]!,
+                        height: 100,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ListTile(
+                    leading: const Icon(Icons.image, color: Color(0xFF4B4EAB)),
+                    title: const Text('Seleccionar Imagen 2', style: TextStyle(color: Color(0xFF4B4EAB))),
+                    subtitle: _imageFiles[1] != null ? const Text('Imagen seleccionada', style: TextStyle(color: Colors.black87)) : const Text('Sin imagen seleccionada', style: TextStyle(color: Colors.black87)),
+                    onTap: () => _pickImage(1),
+                  ),
+                  if (_imageFiles[1] != null)
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Image.file(
+                        _imageFiles[1]!,
+                        height: 100,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ListTile(
+                    leading: const Icon(Icons.image, color: Color(0xFF4B4EAB)),
+                    title: const Text('Seleccionar Imagen 3', style: TextStyle(color: Color(0xFF4B4EAB))),
+                    subtitle: _imageFiles[2] != null ? const Text('Imagen seleccionada', style: TextStyle(color: Colors.black87)) : const Text('Sin imagen seleccionada', style: TextStyle(color: Colors.black87)),
+                    onTap: () => _pickImage(2),
+                  ),
+                  if (_imageFiles[2] != null)
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Image.file(
+                        _imageFiles[2]!,
                         height: 100,
                         width: double.infinity,
                         fit: BoxFit.cover,

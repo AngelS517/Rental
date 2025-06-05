@@ -469,9 +469,7 @@ class _PublicadosProveedorState extends State<PublicadosProveedor> {
             leading: ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Image.network(
-                imagenUrl.isNotEmpty
-                    ? imagenUrl
-                    : 'https://via.placeholder.com/60', // Placeholder si no hay imagen
+                imagenUrl.isNotEmpty ? imagenUrl : 'https://via.placeholder.com/60',
                 width: 60,
                 height: 60,
                 fit: BoxFit.cover,
@@ -584,7 +582,17 @@ class _PublicadosProveedorState extends State<PublicadosProveedor> {
                   itemBuilder: (context, index) {
                     final vehiculo = vehiculos[index];
                     final data = vehiculo.data() as Map<String, dynamic>;
-                    final imagenUrl = data['imagen']?.toString() ?? '';
+                    // Handle imagen as either a String or List<dynamic>
+                    dynamic imagen = data['imagen'];
+                    String imagenUrl;
+                    if (imagen is String) {
+                      imagenUrl = imagen;
+                    } else if (imagen is List<dynamic>) {
+                      imagenUrl = imagen.isNotEmpty ? imagen[0]?.toString() ?? '' : '';
+                    } else {
+                      imagenUrl = '';
+                    }
+
                     return vehiculoItem(
                       data['marca']?.toString() ?? 'Sin marca',
                       imagenUrl,
@@ -634,7 +642,7 @@ class _PublicadosProveedorState extends State<PublicadosProveedor> {
           }
         },
         child: const Icon(Icons.add),
-        backgroundColor: const Color(0xFF7b43cd), // Changed to #7b43cd
+        backgroundColor: const Color(0xFF7b43cd),
         foregroundColor: Colors.white,
       ),
     );

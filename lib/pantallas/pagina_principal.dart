@@ -20,8 +20,10 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
 
   late Stream<QuerySnapshot<Map<String, dynamic>>> _ofertasStream;
   late StreamSubscription<QuerySnapshot<Map<String, dynamic>>>
-  _ofertasSubscription;
+      _ofertasSubscription;
   bool _mostrarBotonRecargar = false;
+  bool _isLoading = true; // Track initial loading state
+  bool _hasInitialized = false; // Prevent multiple initializations
 
   @override
   void initState() {
@@ -33,17 +35,52 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
       ),
     );
 
-    _ofertasStream = _crearStreamOfertas();
+    // Ensure initialization happens only once
+    if (!_hasInitialized) {
+      // Add a delay to allow Firestore and session to stabilize
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _hasInitialized = true;
+          });
+        }
+      });
 
-    _ofertasSubscription = FirebaseFirestore.instance
-        .collection('Vehiculos')
-        .snapshots()
-        .debounceTime(const Duration(seconds: 1))
-        .listen((_) {
+      // Initialize stream with error handling
+      _ofertasStream = _crearStreamOfertas().handleError((error, stackTrace) {
+        print('Error en el stream de ofertas: $error');
+        if (mounted) {
           setState(() {
             _mostrarBotonRecargar = true;
+            _isLoading = false; // Ensure loading stops on error
           });
-        });
+        }
+      });
+
+      _ofertasSubscription = FirebaseFirestore.instance
+          .collection('Vehiculos')
+          .snapshots()
+          .debounceTime(const Duration(seconds: 1))
+          .handleError((error, stackTrace) {
+            print('Error en la suscripción: $error');
+            if (mounted) {
+              setState(() {
+                _mostrarBotonRecargar = true;
+                _isLoading = false; // Ensure loading stops on error
+              });
+            }
+          })
+          .listen((_) {
+            if (mounted) {
+              setState(() {
+                _mostrarBotonRecargar = true;
+              });
+            }
+          });
+
+      _hasInitialized = true;
+    }
   }
 
   Stream<QuerySnapshot<Map<String, dynamic>>> _crearStreamOfertas() {
@@ -112,59 +149,71 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
-          StreamBuilder(
-            stream: _ofertasStream,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                return const Text('No hay vehículos en oferta');
-              }
+          if (_isLoading)
+            const Center(child: CircularProgressIndicator())
+          else
+            StreamBuilder(
+              stream: _ofertasStream,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return const Center(child: Text('Error al cargar las ofertas'));
+                }
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Center(child: Text('No hay vehículos en oferta'));
+                }
 
-              final vehiculos = snapshot.data!.docs;
+                final vehiculos = snapshot.data!.docs;
 
-              return ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: vehiculos.length,
-                itemBuilder: (context, index) {
-                  final v = vehiculos[index];
-                  final modelo =
-                      v['modelo']?.toString() ?? 'Modelo desconocido';
-                  final propietario =
-                      v['Propietario']?.toString() ?? 'Sin propietario';
-                  final precio =
-                      v['precioPorDia'] != null
-                          ? (v['precioPorDia'] is num
-                              ? (v['precioPorDia'] as num).toDouble()
-                              : 0.0)
-                          : 0.0;
-                  final imagenUrl =
-                      v.data().containsKey('imagen')
-                          ? v['imagen'].toString()
-                          : '';
-                  final marca =
-                      v.data().containsKey('marca')
-                          ? v['marca'].toString()
-                          : 'Marca desconocida';
-                  final placa =
-                      v.data().containsKey('placa')
-                          ? v['placa'].toString()
-                          : 'Sin placa';
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: vehiculos.length,
+                  itemBuilder: (context, index) {
+                    final v = vehiculos[index];
+                    final modelo =
+                        v['modelo']?.toString() ?? 'Modelo desconocido';
+                    final propietario =
+                        v['Propietario']?.toString() ?? 'Sin propietario';
+                    final precio =
+                        v['precioPorDia'] != null
+                            ? (v['precioPorDia'] is num
+                                ? (v['precioPorDia'] as num).toDouble()
+                                : 0.0)
+                            : 0.0;
+                    // Handle imagen as either a String or List<dynamic>
+                    dynamic imagen = v['imagen'];
+                    String imagenUrl;
+                    if (imagen is String) {
+                      imagenUrl = imagen;
+                    } else if (imagen is List<dynamic>) {
+                      imagenUrl = imagen.isNotEmpty ? imagen[0]?.toString() ?? '' : '';
+                    } else {
+                      imagenUrl = '';
+                    }
+                    final marca =
+                        v.data().containsKey('marca')
+                            ? v['marca'].toString()
+                            : 'Marca desconocida';
+                    final placa =
+                        v.data().containsKey('placa')
+                            ? v['placa'].toString()
+                            : 'Sin placa';
 
-                  return ofertaItemFirestore(
-                    propietario,
-                    modelo,
-                    precio,
-                    imagenUrl,
-                    marca,
-                    placa,
-                  );
-                },
-              );
-            },
-          ),
+                    return ofertaItemFirestore(
+                      propietario,
+                      modelo,
+                      precio,
+                      imagenUrl,
+                      marca,
+                      placa,
+                    );
+                  },
+                );
+              },
+            ),
           const SizedBox(height: 20),
 
           // Botón de recargar ofertas (solo visible cuando corresponde)
