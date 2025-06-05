@@ -6,18 +6,32 @@ class PaginaTerminos extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFEFF0F3), // Fondo general
       appBar: AppBar(
-        title: const Text('Términos y Condiciones'),
-        backgroundColor: Color(0xFF5A1EFF),
-        foregroundColor: Colors.white,
+        title: const Text(
+          'Términos y Condiciones',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: const Color(
+          0xFF5A1EFF,
+        ), // Color de la AppBar igual al login
+        foregroundColor: Colors.white, // Color del texto de la AppBar
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFF0E0B65), // Fondo de la caja principal (azul oscuro)
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(40),
+            topRight: Radius.circular(40),
+          ),
+        ),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
             Expanded(
               child: SingleChildScrollView(
-                child: Text('''
+                child: Text(
+                  '''
 TÉRMINOS Y CONDICIONES DE USO
 
 1. INTRODUCCIÓN
@@ -76,24 +90,38 @@ Bienvenido(a) a nuestra aplicación de renta de vehículos. Al registrarte y uti
 10. CONTACTO
 Para consultas, reclamos o soporte, puedes contactarnos al correo:
 📧 soporte@rentalapp.com
-''', style: const TextStyle(fontSize: 16)),
+                  ''',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.white, // Texto blanco como en los formularios
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 20),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF5A1EFF),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(
+                    0xFF5A1EFF,
+                  ), // Mismo color que los botones
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
-              ),
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text(
-                'Aceptar',
-                style: TextStyle(color: Colors.white),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text(
+                  'Aceptar',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
               ),
             ),
           ],

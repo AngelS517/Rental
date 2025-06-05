@@ -23,15 +23,15 @@ class PaginaDescripcionVehiculo extends StatelessWidget {
     }
   }
 
-  Future<String> obtenerTelefonoPropietario(String? propietarioUid) async {
-    if (propietarioUid == null || propietarioUid.isEmpty) {
+  Future<String> obtenerTelefonoProveedor(String? proveedorUid) async {
+    if (proveedorUid == null || proveedorUid.isEmpty) {
       return 'No disponible';
     }
     try {
       final userDoc =
           await FirebaseFirestore.instance
               .collection('Usuarios')
-              .doc(propietarioUid)
+              .doc(proveedorUid)
               .get();
       if (userDoc.exists) {
         return userDoc.data()?['telefono'] ?? 'No disponible';
@@ -89,9 +89,11 @@ class PaginaDescripcionVehiculo extends StatelessWidget {
           final data = snapshot.data!.data()!;
           final detalles = data['detalles'] ?? {};
           final categoria = data['categoria']?.toString().toLowerCase() ?? '';
+          final propietarioNombre = data['Propietario'] ?? 'No disponible';
+          final proveedorUid = data['proveedorUid']?.toString();
 
           return FutureBuilder<String>(
-            future: obtenerTelefonoPropietario(data['Propietario']?.toString()),
+            future: obtenerTelefonoProveedor(proveedorUid),
             builder: (context, telefonoSnapshot) {
               if (telefonoSnapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
@@ -174,35 +176,29 @@ class PaginaDescripcionVehiculo extends StatelessWidget {
                             spacing: 16,
                             runSpacing: 10,
                             children: [
-                              // Mostrar #pasajeros solo si no es moto
                               if (categoria != 'moto')
                                 detalleIcono(
                                   Icons.person,
                                   '${detalles['#pasajeros'] ?? 'N/A'} Pasajeros',
                                 ),
-                              // Mostrar aire acondicionado solo si no es moto
                               if (categoria != 'moto')
                                 detalleIcono(
                                   Icons.ac_unit,
                                   'Aire acondicionado',
                                 ),
-                              // Siempre mostrar transmisión
                               detalleIcono(
                                 Icons.settings,
                                 detalles['transmision'] ?? 'Manual',
                               ),
-                              // Mostrar puertas solo si no es moto
                               if (categoria != 'moto')
                                 detalleIcono(
                                   Icons.door_front_door,
                                   '${detalles['puertas'] ?? 4} puertas',
                                 ),
-                              // Siempre mostrar kilometraje ilimitado
                               detalleIcono(
                                 Icons.speed,
                                 'Kilometraje ilimitado',
                               ),
-                              // Siempre mostrar tipo de combustible
                               detalleIcono(
                                 Icons.local_gas_station,
                                 detalles['tipoCombustible'] ??
@@ -236,10 +232,8 @@ class PaginaDescripcionVehiculo extends StatelessWidget {
                             'Datos propietario:',
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
-                          Text(
-                            'Nombre: ${data['Propietario'] ?? 'No disponible'}',
-                          ),
-                          Text('telefono: $telefonoPropietario'),
+                          Text('Nombre: $propietarioNombre'),
+                          Text('Teléfono: $telefonoPropietario'),
                           const SizedBox(height: 16),
                           Center(
                             child: GestureDetector(

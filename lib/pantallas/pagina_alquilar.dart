@@ -18,11 +18,9 @@ class PaginaAlquilar extends StatefulWidget {
 }
 
 class _PaginaAlquilarState extends State<PaginaAlquilar> {
-  final nacionalidadController = TextEditingController();
   final fechaRetiroController = TextEditingController();
   final fechaEntregaController = TextEditingController();
   bool proteccionTotal = false;
-  bool autorizaDatos = false;
 
   String nombreUsuario = '';
   String correoUsuario = '';
@@ -30,6 +28,10 @@ class _PaginaAlquilarState extends State<PaginaAlquilar> {
   String documentoUsuario = '';
   File? licenciaImagen;
   late int precioPorDia;
+
+  int precioVehiculo = 0;
+  int precioProteccion = 0;
+  int precioTotal = 0;
 
   final ImagePicker _picker = ImagePicker();
 
@@ -70,7 +72,7 @@ class _PaginaAlquilarState extends State<PaginaAlquilar> {
 
     if (query.docs.isNotEmpty) {
       final data = query.docs.first.data();
-      precioPorDia = (data['precioPorDia'] as num?)?.toInt() ?? 0;
+      precioPorDia = 30000; // Cambiado fijo a 30000 según tu pedido
       return query.docs.first;
     } else {
       throw Exception('Vehículo no encontrado');
@@ -101,7 +103,59 @@ class _PaginaAlquilarState extends State<PaginaAlquilar> {
         );
         final formato = DateFormat('yyyy-MM-dd HH:mm');
         controller.text = formato.format(fechaHora);
+        _calcularPrecios(); // Recalcular precios al cambiar fecha
       }
+    }
+  }
+
+  void _calcularPrecios() {
+    if (fechaRetiroController.text.isEmpty ||
+        fechaEntregaController.text.isEmpty) {
+      setState(() {
+        precioVehiculo = 0;
+        precioProteccion = 0;
+        precioTotal = 0;
+      });
+      return;
+    }
+
+    try {
+      final fechaRetiro = DateFormat(
+        'yyyy-MM-dd HH:mm',
+      ).parse(fechaRetiroController.text);
+      final fechaEntrega = DateFormat(
+        'yyyy-MM-dd HH:mm',
+      ).parse(fechaEntregaController.text);
+
+      // Diferencia en horas y convertir a días (al menos 1 día)
+      final diferenciaHoras = fechaEntrega.difference(fechaRetiro).inHours;
+      final diferenciaDias = (diferenciaHoras / 24).ceil();
+
+      if (diferenciaDias < 1) {
+        // No cumple mínimo 1 día
+        setState(() {
+          precioVehiculo = 0;
+          precioProteccion = 0;
+          precioTotal = 0;
+        });
+        return;
+      }
+
+      int vehiculoPrice = diferenciaDias * precioPorDia;
+      int proteccionPrice = proteccionTotal ? 30000 : 0;
+      int total = vehiculoPrice + proteccionPrice;
+
+      setState(() {
+        precioVehiculo = vehiculoPrice;
+        precioProteccion = proteccionPrice;
+        precioTotal = total;
+      });
+    } catch (e) {
+      setState(() {
+        precioVehiculo = 0;
+        precioProteccion = 0;
+        precioTotal = 0;
+      });
     }
   }
 
@@ -160,79 +214,191 @@ class _PaginaAlquilarState extends State<PaginaAlquilar> {
           appBar: AppBar(
             title: const Text('Formulario de Alquiler'),
             backgroundColor: const Color(0xFF4B4EAB),
-            foregroundColor:
-                Colors.white, // Color blanco para título e íconos del AppBar
+            foregroundColor: Colors.white,
           ),
-
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Center(),
-                const SizedBox(height: 20),
-                campoInfo('Vehículo a alquilar:', '$marca $modelo'),
-                campoInfo('Placa:', widget.placa),
-                campoInfo('Precio por día:', '\$${precioPorDia.toString()}'),
-                campoInfo('Nombre completo:', nombreUsuario),
-                campoInfo('Correo electrónico:', correoUsuario),
-                campoInfo('Celular:', celularUsuario),
-                campoInfo('Número de documento:', documentoUsuario),
-                campoTexto('Nacionalidad:', nacionalidadController),
-                const SizedBox(height: 8),
-
-                // Caja para fecha de retiro con botón integrado
-                campoFecha('Fecha y hora de retiro:', fechaRetiroController),
-
-                // Caja para fecha de entrega con botón integrado
-                campoFecha('Fecha y hora de entrega:', fechaEntregaController),
-
-                const SizedBox(height: 8),
-
-                // Botón de subir imagen de licencia
-                ElevatedButton(
-                  onPressed: seleccionarImagenLicencia,
-                  child: const Text('Seleccionar foto de licencia de conducir'),
-                ),
-                if (licenciaImagen != null)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Image.file(licenciaImagen!, height: 150),
-                  ),
-
-                const SizedBox(height: 8),
-
-                Row(
-                  children: [
-                    Checkbox(
-                      value: proteccionTotal,
-                      onChanged: (value) {
-                        setState(() {
-                          proteccionTotal = value ?? false;
-                        });
-                      },
-                    ),
-                    const Expanded(child: Text('Protección total (+\$55.000)')),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Checkbox(
-                      value: autorizaDatos,
-                      onChanged: (value) {
-                        setState(() {
-                          autorizaDatos = value ?? false;
-                        });
-                      },
-                    ),
-                    const Expanded(
-                      child: Text(
-                        'Autorizo el tratamiento de datos personales',
+                // Información del vehículo
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 6,
+                        offset: Offset(0, 2),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Información del vehículo',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      campoInfo('Vehículo a alquilar:', '$marca $modelo'),
+                      campoInfo('Placa:', widget.placa),
+                      campoInfo(
+                        'Precio por día:',
+                        '\$${precioPorDia.toString()}',
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 20),
+
+                // Información del usuario
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 6,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Información del usuario',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      campoInfo('Nombre completo:', nombreUsuario),
+                      campoInfo('Correo electrónico:', correoUsuario),
+                      campoInfo('Celular:', celularUsuario),
+                      campoInfo('Número de documento:', documentoUsuario),
+                    ],
+                  ),
+                ),
+
+                // Información de alquiler
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 6,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Información de alquiler',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      campoFecha(
+                        'Fecha y hora de retiro:',
+                        fechaRetiroController,
+                      ),
+                      campoFecha(
+                        'Fecha y hora de entrega:',
+                        fechaEntregaController,
+                      ),
+                      const SizedBox(height: 8),
+                      ElevatedButton(
+                        onPressed: seleccionarImagenLicencia,
+                        child: const Text(
+                          'Seleccionar foto de licencia de conducir',
+                        ),
+                      ),
+                      if (licenciaImagen != null)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Image.file(licenciaImagen!, height: 150),
+                        ),
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: proteccionTotal,
+                            onChanged: (value) {
+                              setState(() {
+                                proteccionTotal = value ?? false;
+                                _calcularPrecios();
+                              });
+                            },
+                          ),
+                          const Expanded(
+                            child: Text('Protección total (+\$30.000)'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Valor (precios)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: 24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 6,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Valor',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      campoInfo('Precio del vehículo:', '\$$precioVehiculo'),
+                      campoInfo(
+                        'Precio protección total:',
+                        '\$$precioProteccion',
+                      ),
+                      const Divider(),
+                      campoInfo(
+                        'Precio total:',
+                        '\$$precioTotal',
+                        color: Colors.green[700],
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ],
+                  ),
+                ),
+
                 Center(
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
@@ -246,13 +412,51 @@ class _PaginaAlquilarState extends State<PaginaAlquilar> {
                       ),
                     ),
                     onPressed: () async {
-                      try {
-                        if (licenciaImagen == null) {
-                          throw Exception(
-                            'Debes seleccionar una foto de la licencia.',
-                          );
-                        }
+                      if (licenciaImagen == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Debes seleccionar una foto de la licencia.',
+                            ),
+                          ),
+                        );
+                        return;
+                      }
 
+                      final confirmacion = await showDialog<bool>(
+                        context: context,
+                        builder:
+                            (context) => AlertDialog(
+                              title: const Text('Confirmar renta'),
+                              content: const Text(
+                                '¿Estás seguro de que quieres alquilar este vehículo?',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed:
+                                      () => Navigator.of(context).pop(false),
+                                  child: const Text('Cancelar'),
+                                ),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF4B4EAB),
+                                  ),
+                                  onPressed:
+                                      () => Navigator.of(context).pop(true),
+                                  child: const Text(
+                                    'Confirmar',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                              ],
+                            ),
+                      );
+
+                      if (confirmacion != true) {
+                        return; // Cancelado por el usuario
+                      }
+
+                      try {
                         final fechaRetiro = DateFormat(
                           'yyyy-MM-dd HH:mm',
                         ).parse(fechaRetiroController.text.trim());
@@ -274,7 +478,6 @@ class _PaginaAlquilarState extends State<PaginaAlquilar> {
                         final urlLicencia = await subirImagenACloudinary(
                           licenciaImagen!,
                         );
-
                         final total =
                             proteccionTotal
                                 ? precioPorDia + 55000
@@ -291,8 +494,8 @@ class _PaginaAlquilarState extends State<PaginaAlquilar> {
                           'fechaRetiro': fechaRetiroController.text.trim(),
                           'fechaEntrega': fechaEntregaController.text.trim(),
                           'proteccionTotal': proteccionTotal,
-                          'autorizaDatos': autorizaDatos,
                           'urlLicencia': urlLicencia,
+                          'precioTotal': precioProteccion,
                           'fechaRegistro': FieldValue.serverTimestamp(),
                         }, SetOptions(merge: true));
 
@@ -350,7 +553,7 @@ class _PaginaAlquilarState extends State<PaginaAlquilar> {
                                     ),
                                     const SizedBox(height: 12),
                                     Text(
-                                      'Precio total: \$${total.toString()}',
+                                      'Precio total: \$${precioTotal.toString()}',
                                       style: const TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
@@ -399,73 +602,56 @@ class _PaginaAlquilarState extends State<PaginaAlquilar> {
     );
   }
 
-  Widget campoInfo(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          margin: const EdgeInsets.only(top: 4, bottom: 8),
-          decoration: BoxDecoration(
-            color: const Color(0xFFEAEAEA),
-            borderRadius: BorderRadius.circular(8),
+  Widget campoInfo(
+    String etiqueta,
+    String valor, {
+    Color? color,
+    FontWeight? fontWeight,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: RichText(
+        text: TextSpan(
+          text: '$etiqueta ',
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+            fontSize: 16,
           ),
-          child: Text(value),
+          children: [
+            TextSpan(
+              text: valor,
+              style: TextStyle(
+                fontWeight: fontWeight ?? FontWeight.normal,
+                color: color ?? Colors.black87,
+                fontSize: 16,
+              ),
+            ),
+          ],
         ),
-      ],
-    );
-  }
-
-  Widget campoTexto(String label, TextEditingController controller) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 4),
-        TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            filled: true,
-            fillColor: Color(0xFFEAEAEA),
-            border: OutlineInputBorder(),
-            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          ),
-        ),
-        const SizedBox(height: 8),
-      ],
+      ),
     );
   }
 
   Widget campoFecha(String label, TextEditingController controller) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 4),
-        GestureDetector(
-          onTap: () => seleccionarFechaYHora(controller),
-          child: AbsorbPointer(
-            child: TextField(
-              controller: controller,
-              decoration: const InputDecoration(
-                filled: true,
-                fillColor: Color(0xFFEAEAEA),
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                suffixIcon: Icon(
-                  Icons.calendar_today,
-                  color: Color(0xFF4B4EAB),
-                ),
-              ),
-            ),
-          ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: TextFormField(
+        controller: controller,
+        readOnly: true,
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          suffixIcon: const Icon(Icons.calendar_today),
         ),
-        const SizedBox(height: 8),
-      ],
+        onTap: () => seleccionarFechaYHora(controller),
+      ),
     );
+  }
+
+  void mostrarMensaje(String mensaje) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(mensaje)));
   }
 }

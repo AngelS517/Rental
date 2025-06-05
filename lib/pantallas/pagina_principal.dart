@@ -170,20 +170,33 @@ class _PaginaPrincipalState extends State<PaginaPrincipal> {
           // Botón de recargar ofertas (solo visible cuando corresponde)
           if (_mostrarBotonRecargar)
             Center(
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  setState(() {
-                    _ofertasStream = _crearStreamOfertas();
-                    _mostrarBotonRecargar = false;
-                  });
-                },
-                icon: const Icon(Icons.refresh),
-                label: const Text('Cargar Ofertas'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF7b43cd), Color(0xFF071082)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _ofertasStream = _crearStreamOfertas();
+                      _mostrarBotonRecargar = false;
+                    });
+                  },
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Cargar Ofertas'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent, // Hacer transparente
+                    foregroundColor: Colors.white,
+                    shadowColor:
+                        Colors
+                            .transparent, // Quitar sombra para unificar visualmente
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
               ),

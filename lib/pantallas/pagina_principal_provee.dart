@@ -194,7 +194,13 @@ class _PaginaPrincipalProveedorState extends State<PaginaPrincipalProveedor> {
                   ],
                 ),
                 trailing: TextButton(
-                  child: const Text('Ubicación'),
+                  style: TextButton.styleFrom(
+                    backgroundColor: Color(0xFF5A1EFF), // Fondo morado
+                  ),
+                  child: const Text(
+                    'Ubicación',
+                    style: TextStyle(color: Colors.white), // Letras blancas
+                  ),
                   onPressed: () {
                     Navigator.pushNamed(
                       context,

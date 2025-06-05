@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'login.dart'; // Pantalla de login
 import 'pagina_terminos.dart';
+import 'pagina_historial_proveedor.dart';
 
 class PaginaPerfilProveedor extends StatefulWidget {
   final Map<String, dynamic>? preloadedUserData; // Datos precargados
@@ -603,6 +604,27 @@ class _PaginaPerfilProveedorState extends State<PaginaPerfilProveedor> {
                 ),
               ),
               const SizedBox(height: 30),
+              ListTile(
+                leading: const Icon(
+                  Icons.history,
+                  color: Color(0xFF4B4EAB), // Color como el segundo ListTile
+                ),
+                title: const Text("Historial"),
+                trailing: const Icon(
+                  Icons.keyboard_arrow_right,
+                  color: Color(
+                    0xFF4B4EAB,
+                  ), // Color de la flechita también igual
+                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const HistorialProveedor(),
+                    ),
+                  );
+                },
+              ),
               ListTile(
                 leading: const Icon(
                   Icons.description,

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:rental/widgets/custom_widgets.dart';
+import 'pagina_principal.dart';
 
 class PaginaVehiculos extends StatefulWidget {
   final String? categoria;
@@ -12,31 +12,7 @@ class PaginaVehiculos extends StatefulWidget {
 }
 
 class _PaginaVehiculosState extends State<PaginaVehiculos> {
-  int _selectedIndex = 0;
   String _sortOrder = 'default';
-
-  void _onItemTapped(int index) {
-    setState(() => _selectedIndex = index);
-    switch (index) {
-      case 0:
-        Navigator.popUntil(context, (route) {
-          return route.settings.name == '/inicio' || route.isFirst;
-        });
-        if (ModalRoute.of(context)?.settings.name != '/inicio') {
-          Navigator.pushNamed(context, '/inicio');
-        }
-        break;
-      case 1:
-        Navigator.pushNamed(context, '/mapa');
-        break;
-      case 2:
-        Navigator.pushNamed(context, '/favoritos');
-        break;
-      case 3:
-        Navigator.pushNamed(context, '/perfil');
-        break;
-    }
-  }
 
   void _onSortSelected(String value) {
     setState(() {
@@ -198,7 +174,6 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                             : (data['calificacion'] as num?)?.toDouble() ?? 0.0;
                     final placa = data['placa'] as String;
 
-                    // Mostrar la calificación solo lectura, sin permitir modificarla
                     return vehiculoItem(
                       data['marca']?.toString() ?? 'Sin marca',
                       data['modelo']?.toString() ?? '',
@@ -214,18 +189,60 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
                           'No especificado',
                       calificacion,
                       placa,
-                      null, // No se pasa callback para cambiar rating
+                      null,
                     );
                   },
                 );
               },
             ),
           ),
+          const SizedBox(height: 10),
+          Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF0D47A1), Color(0xFF7B1FA2)], // Azul a morado
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(10),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PaginaPrincipal(),
+                    ),
+                  );
+                },
+
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 20,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Icon(Icons.arrow_back, color: Colors.white),
+                      SizedBox(width: 8),
+                      Text(
+                        'Volver',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
-      ),
-      bottomNavigationBar: CustomNavBar(
-        selectedIndex: _selectedIndex,
-        onTap: _onItemTapped,
       ),
     );
   }
@@ -243,7 +260,7 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
     String kilometraje,
     double calificacion,
     String placa,
-    Function(double)? onRatingSelected, // Ahora opcional
+    Function(double)? onRatingSelected,
   ) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -388,7 +405,6 @@ class _PaginaVehiculosState extends State<PaginaVehiculos> {
               ],
             ),
             const SizedBox(height: 4),
-            // Mostrar estrellas como solo lectura (sin onTap)
             Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: List.generate(5, (index) {
